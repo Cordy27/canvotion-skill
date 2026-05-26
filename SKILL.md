@@ -10,7 +10,7 @@ description: "Generate editable video projects and render them using code via th
 - Use the Canvotion CLI to interact with Canvotion services.
 - Execute only standard high-level CLI commands (e.g., `canvotion ...`).
 - Do not attempt to call underlying API endpoints or internal system commands directly.
-- For authoring guidelines, refer to the rule files under the `project-agent` directory (which contains guidelines for planning, visuals, coding, and 3D scenes).
+- For authoring guidelines, refer to the rule files under the `[project-agent](./project-agent)` directory (which contains guidelines for planning, visuals, coding, and 3D scenes).
 
 ## Setup
 
@@ -76,10 +76,10 @@ description: "Generate editable video projects and render them using code via th
 
 ## Authoring Rule Tree
 
-- Use `project-agent/plan/10-outline.rule` for project outlines.
-- Use `project-agent/visual/` rules for visual planning and refinement.
-- Use `project-agent/code/` rules for Frame/Leafer authoring, styles, animations, voiceovers, and asset references.
-- Use `project-agent/threejs/` rules when the canvas requires 3D scene configuration.
+- Use `[project-agent/plan/10-outline.rule](./project-agent/plan/10-outline.rule)` for project outlines.
+- Use `[project-agent/visual/](./project-agent/visual/)` rules for visual planning and refinement.
+- Use `[project-agent/code/](./project-agent/code/)` rules for Frame/Leafer authoring, styles, animations, voiceovers, and asset references.
+- Use `[project-agent/threejs/](./project-agent/threejs/)` rules when the canvas requires 3D scene configuration.
 
 ## Boundaries
 
