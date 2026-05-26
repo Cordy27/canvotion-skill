@@ -1,0 +1,23 @@
+# Critique Rule
+
+Load this rule when you need the review contract for validating generated slides.
+
+## Review target
+
+- Review the rendered video or static preview against the intended `Slide Plan` and `Visual Plan`.
+- Check whether the animations are smooth and whether the result matches the planned visual direction.
+- Focus on timing, layout, visual glitches, and the values of planned properties that materially affect the result.
+
+## Required checks
+
+- Content rendering: confirm important text and elements are visible.
+- Layout balance: confirm spacing, alignment, and composition remain readable.
+- Visual glitches: confirm the renderer output looks intentional rather than corrupted.
+- Root cause: explicitly distinguish animation logic issues, layout logic issues, and suspected renderer or engine issues.
+
+## Output behavior
+
+- Provide constructive feedback instead of a vague pass or fail.
+- If the issues are serious, explicitly recommend `retry_slide`.
+- If code appears correct but the renderer output is still wrong, describe the suspected engine error explicitly.
+- If the caller asks for a machine-readable critique, return only the requested structured payload.

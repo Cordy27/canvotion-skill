@@ -1,0 +1,57 @@
+# 小球沿路径运动规则
+
+当用户先在 `draft` 里画出一个圆，随后又为这个圆补出明确的移动路径、轨迹线或箭头路径时，使用这条规则。
+
+## 触发条件
+
+- 当前请求围绕一个圆形主体展开，这个圆明显表达的是“小球”而不是普通几何装饰。
+- 当前 `draft`、后续 `draft`，或当前页的 page note 中，出现了这颗球的明确移动路径、轨迹线或方向箭头。
+- 用户想要的是“同一颗小球沿手绘路径运动”的 scripted scene，而不是完全自由发挥的新页面。
+- 如果当前只有圆、还没有路径，也仍然使用这条规则生成第一阶段静态小球页，等待后续续写。
+
+## 必要加载顺序
+
+- 先加载 `project-agent/code/canvas-and-elements` 和 `project-agent/code/layout-and-transform`。
+- 如果要让小球沿路径运动，再加载 `project-agent/code/animation-and-motion`。
+- 在做发布决定前，加载 `project-agent/code/workspace-publish`。
+
+## 执行逻辑
+
+1. **阶段 1：圆变成小球**
+   - 把用户画出的圆解释成一颗小球，而不是普通圆形装饰。
+   - 生成一个只包含这颗小球的页面，把它放在 draft 指示的起始位置。
+   - 在完整页面代码里挂好一条共享动画时间线，例如 `ballMotionKeyframes`，并把小球的 `animation: { keyframes: ballMotionKeyframes }` 固定在可维护的变量里。
+   - 同时提供一个追加辅助函数，例如 `pushBallPathBlock(points, options)`，让后续普通 focused edit 可以补路径调用而不重写整套动画结构。
+   - 如果当前还没有看到路径，就不要凭空发明运动；先发布静态小球页。
+
+2. **阶段 2：按路径续写运动**
+   - 先读取当前 page code。
+   - 从新的 `draft` 或 page note 中提取这颗球要走的路径，并整理成有顺序的点列。
+   - 在普通 `replace_focus` 更新中保留现有结构，并追加一次共享辅助函数调用，例如 `pushBallPathBlock([...])`。
+   - 继续驱动同一颗球沿路径运动，不要重新创建第二颗球。
+   - 如果手绘路径是曲线或折线，就用足够多的采样点逼近它的转折和弯曲。
+
+## 路径与动画合同
+
+- 优先复用和页面一起建立的那条共享时间线；“续写”应体现为同一份 `ballMotionKeyframes` 或同一套共享动画数据继续增长。
+- 不要在后续 focused edit 里重写整个 `ball.animation`；要通过共享 helper 或共享 keyframes 追加新步骤。
+- 对同一颗球的顺序多步骤运动，使用单个 `animation.keyframes` 时间线；不要把它改写成 `animation: [ ... ]`。
+- 如果你选择 Leafer `motionPath` 方案，路径元素和小球必须位于同一个直接父 `Group` 下，路径元素要带 `motionPath: true`。
+- 无论用 `motionPath` 还是直接写 `x / y` keyframes，都要保持“同一颗球、同一条续写时间线、末尾追加一个新 block”这三个条件成立。
+
+## 建议命令顺序
+
+- 第一阶段静态小球页：
+  - `canvotion page ship --filename <focus_page> --mode replace_focus --stdin-file page.js`
+- 第二阶段路径续写：
+  - `canvotion page read --filename <focus_page>`
+  - `canvotion page write --filename <focus_page> --stdin-file page.js`
+  - `canvotion page verify --filename <focus_page>`
+  - `canvotion page publish --filename <focus_page> --mode replace_focus`
+
+## 安全要求
+
+- 如果画面里有多个圆、多个候选路径，或者无法判断哪条路径属于哪颗球，先问一个简短澄清问题。
+- 如果用户只画了圆、没有给出路径，就不要凭空生成移动轨迹。
+- 如果用户后续补的是“继续当前球的运动”，发布时必须保留当前页既有结构并走普通 external `replace_focus`，不要使用 previous-end continuation publish。
+- 不要上传外部素材；这个场景应该直接用 Leafer 图形和动画完成。

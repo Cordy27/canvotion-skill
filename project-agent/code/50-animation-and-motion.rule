@@ -1,0 +1,224 @@
+# 代码技能：动画编排与运动
+
+当你需要编写入场/出场动画、关键帧运动、摇摆过渡，或让元素沿着特定轨迹运动、实现自身描边生长动画时，加载这条规则作为实现指导。
+
+## 动画样式
+
+- 声明式优先：必须在元素实例化时通过 `animation` 属性配置动画。禁止使用 `animate()` 和`animationOut`或其他命令式的实例方法。
+- 延迟入场：任何具有延迟入场行为的动画，必须直接在元素的基础属性上设置初始隐藏状态 `opacity: 0`，如果在画布外侧起步也同样需要。等待时间必须写在外层 `delay` 中，禁止用前置的空关键帧或其 `duration` 来伪装等待。
+- 串行多步运动：当单个元素需要在一条时间线上完成有顺序的多步运动时，必须使用单一的 `animation: { keyframes: [...] }` 对象格式。禁止将串行动画拆成数组形式 `animation: [...]`，数组仅允许用于多个完全平行的独立动画段。
+- 追加安全：在进行代码续写时，如果要扩展一个已有的串行动画，必须在原有的 `keyframes` 数组中追加对象，不能直接替换整个 `animation` 对象。
+- 缓动函数命名：必须使用 Leafer 官方带连字符的 easing 名称（例如 `sine-out`, `bounce-out`, `linear`），禁止写成对象点语法或自造词。
+- 旁白触发：如果动画需要被旁白词语触发，把 `triggerAtWord` 写在每个独立的动画对象上，不要写在外层包装对象或 `LeaferVoiceover` 对象上。
+- 外部续写限制：`external-basic` 不开放 previous-end continuation publish。当前焦点页续写时，先读取当前 page code，在普通 `replace_focus` 流程下改写并验证完整页面，不要使用 continuation 发布参数。
+- 多段分镜：当一个动画有多个分镜时，用各动画对象外层 `delay` 根据前一段的 `delay + duration` 排布开始时间；`keyframes[*].duration` 只表示该段时长，不表示等待整条时间线。
+- 组件动画：对复合组件，整体位移、旋转、缩放只挂在组件根容器上；内部 `shell / viewport / contentGroup` 默认保持静态局部坐标，只做语义明确的局部动画，例如 `opacity`、数值变化、轻微浮动或局部 reveal。
+
+```javascript
+// #动画样式 [标准的自动入场与出场串行时间线]
+const entryExitRect = new Rect({
+    x: 300,
+    y: 100,
+    opacity: 0, // 核心：基础属性设置初始状态
+    fill: '#FEB027',
+    animation: {
+        // 核心：禁止使用 animationOut，必须使用 keyframes 串联完整的生命周期
+        keyframes: [
+            // 第 1 步：延迟 0.5 秒后，花费 0.8 秒入场
+            { style: { opacity: 1, x: 0 }, duration: 0.8, delay: 0.5, easing: 'ease-out' },
+            // 第 2 步：停留 2 秒后，花费 0.8 秒反向出场
+            { style: { opacity: 0, x: 150 }, duration: 0.8, delay: 2, easing: 'ease-in' }
+        ]
+    }
+})
+
+// #动画样式 [单属性摇摆过渡 (颜色与形状)]
+const pulsingRect = new Rect({
+    y: 100,
+    cornerRadius: 50,
+    fill: '#32cd79',
+    animation: {
+        style: { x: 500, cornerRadius: 0, fill: '#ffcd00' }, // 核心：直接给定一个目标状态
+        duration: 1,
+        swing: true // 核心：开启摇摆循环播放，将在初始状态与 style 状态之间往复运动
+    }
+})
+
+// #动画样式 [多段串行关键帧动画]
+const complexAnimRect = new Rect({
+    x: 50,
+    y: 100,
+    cornerRadius: 50,
+    fill: '#32cd79',
+    around: 'center', // 作为复杂旋转/缩放的锚点
+    animation: {
+        // 核心：串行多步运动必须用一个 animation 对象包裹 keyframes 数组
+        keyframes: [
+            { style: { x: 150, scaleX: 2, fill: '#ffcd00' }, duration: 0.5 }, 
+            { style: { x: 50, scaleX: 1, fill: '#ffcd00' }, duration: 0.2 },
+            // 单独关键帧可覆盖局部的 easing 和 delay
+            { style: { x: 550, cornerRadius: 0 }, delay: 0.1, easing: 'bounce-out' }, 
+            { x: 50, rotation: -720, cornerRadius: 50 } // 未明确 duration 的关键帧将自动均分剩余时长
+        ],
+        duration: 3, // 动画总时长
+        loop: true,
+        join: true // 核心：将元素的初始属性状态作为 from 关键帧加入到运动起始点
+    }
+})
+
+// #动画样式 [连续虚线滚动动画]
+const dashedLine = new Line({
+    x: 100,
+    y: 100,
+    width: 300,
+    stroke: '#32cd79',
+    strokeWidth: 5,
+    dashPattern: [10, 10], // 核心：定义虚线的实线长度与空白间距
+    dashOffset: 0,
+    animation: { 
+        style: { dashOffset: -20 }, // 核心：偏移量需等于（或为倍数）虚线周期，实现无缝错位滚动
+        easing: 'linear', // 核心：必须使用线性缓动以保证匀速滚动
+        duration: 0.5,
+        loop: true // 核心：开启无限单向循环
+    }
+})
+```
+
+## 运动路径
+
+- 路径声明：必须将作为轨迹的开放路径元素设置 `motionPath: true`，开放折线、走势图、箭头轨迹和描边生长路径必须使用不带 `Z/z` 闭合命令的 `Path`。
+- 闭合图元限制：`Polygon` 是闭合多边形，会隐式连接最后一个点到第一个点；禁止把 `Polygon` 用作开放路径动画或路径自身描边生长，否则最后一帧会出现回到起点的闭合边。
+- 层级约束：作为运动轨迹的路径元素，与需要沿着该路径运动的目标元素，必须被 `add` 挂载在同一个 `Group` 容器下。
+- 运动状态驱动：运动目标需设置基础属性 `motion: 0`（代表起点），并在 `animation.style` 中声明目标状态为 `{ motion: { type: "percent", value: 1 } }`（代表终点 100%）。
+- 挂载顺序：路径元素要先于运动目标添加到同一个父 `Group`。
+- 跟随对齐：需要中心跟随时，运动目标保持 `around: "center"`。
+- 轨迹可见性：路径可以可见或隐藏，但必须真实存在，不能只在动画对象里虚构路径引用。
+- 描边生长动画：如果想让 SVG 路径自身表现出“描边从起点逐渐伸长”的动画，必须在该路径上显式开启 `motionPath: true`，然后对其自身的 `motion` 属性做 0 到 100% 的动画。
+- 笔刷跟随绑定：如果需要一个目标元素跟随着路径的描边一起运动，必须确保：1. 它们挂载在同一个 Group 下；2. 目标元素排在 `motionPath` 元素之后；3. 它们 `animation` 中的 `duration` 和 `easing` 必须完全一致（推荐使用 `linear`）。
+```javascript
+// #运动路径 [元素沿路径轨迹运动]
+const motionGroup = new Group()
+
+const trackPath = new Path({
+    x: 100,
+    y: 100,
+    motionPath: true, // 核心：开启此属性后，同 Group 下的其他元素可沿此轨迹运动
+    path: 'M 0 90 C 100 60, 200 80, 300 40 S 450 10, 550 90', // 核心：开放路径不能带 Z/z
+    stroke: '#32cd79',
+    strokeWidth: 8,
+    fill: null,
+})
+
+const movingCar = new Path({
+    scale: 0.05,
+    fill: '#FEB027',
+    around: 'bottom',
+    path: 'M949.586...（省略长字符）...1855-48.461z',
+    motion: 0, // 核心：声明初始位置在轨迹起点 (0)
+    animation: { 
+        style: { motion: { type: "percent", value: 1 } }, // 核心：声明目标位置在轨迹终点 (100%)
+        duration: 9,
+        loop: true
+    }
+})
+
+// 核心：轨迹对象与运动对象必须存在于同一容器中
+motionGroup.add([trackPath, movingCar])
+
+// #运动路径 [路径自身描边生长动画与挂载物严格跟随]
+const drawingGroup = new Group()
+
+const drawingPath = new Path({
+    x: 100,
+    y: 100,
+    scale: 0.2,
+    motionPath: true, // 核心：将自身设为运动路径，才能实现描边生长
+    stroke: '#32cd79',
+    strokeWidth: 20,
+    path: 'M 0 120 C 140 20, 280 220, 420 80 S 660 120, 760 40', // 核心：开放描边路径不能带 Z/z
+    motion: 0, // 核心：描边从 0 开始
+    animation: {  
+        style: { motion: { type: "percent", value: 1 } }, // 核心：描边生长至 100%
+        duration: 5,
+        loop: true,
+        easing: 'linear' // 核心：推荐使用匀速，方便其他元素精确跟随
+    }
+})
+
+// 添加跟随元素沿着刚才的路径一起运动
+const penTip = new Rect({
+    width: 15,
+    height: 50,
+    cornerRadius: 10,
+    fill: '#FEB027',
+    around: 'bottom',
+    motion: 0,
+    motionRotation: 45, // 核心：可以在运动自动计算的角度上额外偏移一个角度
+    animation: { 
+        style: { motion: { type: "percent", value: 1 } },
+        duration: 5, // 核心：时长必须与 drawingPath 完全一致
+        loop: true,
+        easing: 'linear' // 核心：缓动必须与 drawingPath 完全一致，否则中途会错位
+    }
+})
+
+// 核心：被跟随的路径在前面，跟随的目标元素在后面
+drawingGroup.add([drawingPath, penTip])
+```
+
+## 打字机效果动画
+
+```javascript
+// #动画样式 [文本数字滚动与打字机效果]
+// 1. 数字滚动：text 属性传入数字
+const countAnim = new Text({
+    fill: '#32cd79',
+    text: 0,
+    fontSize: 100,
+    animation: {
+        style: { text: 100 }, // 核心：目标值设为数字，自动执行 count 动画
+        duration: 2
+    }
+})
+
+// 2. 打字机效果：目标值设为字符串，且起始 text 为空或不同内容
+const typewriterAnim = new Text({
+    fill: '#32cd79',
+    text: '', // 起点为空
+    fontSize: 40,
+    animation: {
+        style: { text: 'Welcome to LeaferJS World' }, // 核心：目标值设为字符串
+        duration: 2
+    }
+})
+
+// 3. 删除文本效果
+const deleteAnim = new Text({
+    fill: '#32cd79',
+    text: 'This text will disappear',
+    animation: {
+        style: { text: '' }, // 核心：目标设为空字符串实现删除动画
+        duration: 1
+    }
+})
+```
+
+## 动画配置字典 (Animation Options)
+
+当构建 `animation` 对象时，Agent 只能使用以下受控属性：
+
+- 基础控制：
+  - `style` (Object): 单步过渡动画的目标样式对象。
+  - `keyframes` (Array): 多步关键帧动画的数组，仅在串行多步时使用。
+  - `duration` (Number): 动画总时长（秒），默认为 0.2。
+  - `delay` (Number): 动画整体延迟时间（秒），默认为 0。
+  - `easing` (String): 缓动方式，必须使用带连字符的官方名称（如 `ease-in`, `bounce-out`）。
+- 循环与播放控制：
+  - `loop` (Boolean | Number): 是否循环播放，或指定循环次数。
+  - `loopDelay` (Number): 开启循环时，进入下一次循环前的停留延迟时间（秒）。
+  - `swing` (Boolean | Number): 摇摆播放。开启后，动画将在起点和终点之间往复运动（from -> to -> from...）。
+  - `reverse` (Boolean): 整体反向播放。
+  - `speed` (Number): 倍速控制，默认为 1。
+- 关键帧独立控制：
+  - 在 `keyframes` 数组内的每一个单独关键帧对象中，除了 `style`，还可以独立覆盖设置局部的 `duration`、`delay` 和 `easing`。
+  - `join` (Boolean): 写在最外层。设为 `true` 时，引擎会自动将元素应用动画前的初始状态提取为第一帧，这在状态无缝衔接时极其有用。

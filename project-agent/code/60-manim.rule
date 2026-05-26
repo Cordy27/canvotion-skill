@@ -1,0 +1,105 @@
+# Code Skill: Manim
+
+Load this rule for native ManimAnimation authoring.
+
+## Required pattern
+
+- Use `new ManimAnimation({ manim_code, x, y, width, height })`.
+- `manim_code` is the body of one async `manim-web` scene. The component creates the `Scene` and injects two names:
+  - `scene`: the recording scene proxy. Use `await scene.play(...)`, `await scene.wait(...)`, `scene.add(...)`, and `scene.remove(...)`.
+  - `manim`: the `manim-web/browser` namespace. Destructure from it instead of importing.
+- Write ordinary `manim-web` code inside `manim_code`.
+- Construct Manim `Text` with the object-form constructor, for example `new Text({ text: 'label', fontSize: 32, color: '#ffffff' })`; do not use positional `new Text('label', ...)`.
+- The `manim_code` property value in slide code must be an inline string literal. A backtick literal is allowed only when it has no `${...}` interpolation. Do not assign the scene body to a variable and pass that variable as `manim_code`.
+- For 3D scenes, use ordinary `manim-web` 3D classes and camera APIs. `ThreeDAxes`, `Cube`, `Surface3D`, `scene.setCameraOrientation(...)`, `scene.moveCamera(...)`, `scene.beginAmbientCameraRotation(...)`, `scene.begin3DIllusionCameraRotation(...)`, and `scene.camera.phi/theta/distance` are part of the supported runtime contract.
+- Visible changes must be represented by scene body operations around `await scene.play(...)` or `await scene.wait(...)`. Camera movement with duration should use `await scene.moveCamera({ ... })` so it enters the seekable timeline.
+
+## Forbidden
+
+- Do not use `topic`, `description`, `taskId`, `videoUrl`, `url`, `src`, `fontUrl`, `imageUrl`, `audioUrl`, or `textureUrl`.
+- Do not create `LeaferVideo` for Manim content.
+- Do not use `manim_spec` or `manim_timeline`.
+- Do not import `manim-web`; use the injected `manim` namespace.
+- Do not access `fetch`, `XMLHttpRequest`, `window`, `document`, `globalThis`, `self`, storage APIs, `process`, `eval`, `Function`, dynamic import, `scene.export`, `VideoExporter`, `GifExporter`, `captureStream`, or `MediaRecorder` inside `manim_code`.
+- Do not use remote fonts, remote images, videos, audio, uploaded file IDs, or any external resource path.
+
+## Usage Guidance
+
+- Prefer native ManimAnimation for mathematical, logical, or scientific visuals that benefit from symbolic construction.
+- Keep `manim_code` self-contained and deterministic.
+- Add ordinary Leafer text outside the Manim block when the label should be edited as page text rather than rendered inside Manim.
+
+## Example
+
+```js
+new ManimAnimation({
+    x: 120,
+    y: 80,
+    width: 800,
+    height: 450,
+    manim_code: `
+const { Axes, FunctionGraph, Text, Create, Write } = manim;
+
+const axes = new Axes({
+    xRange: [-4, 4, 1],
+    yRange: [-2, 5, 1],
+    xLength: 8,
+    yLength: 5,
+    color: '#dbeafe',
+    tips: true
+});
+const graph = new FunctionGraph({
+    func: (x) => 0.35 * x * x + 0.2,
+    xRange: [-3.2, 3.2],
+    numSamples: 120,
+    color: '#38bdf8',
+    strokeWidth: 5
+});
+const label = new Text({ text: 'z = x^2 + y^2', fontSize: 40, color: '#ffffff' });
+label.moveTo([0, 2.8, 0]);
+
+await scene.play(new Create(axes, { duration: 0.8 }));
+await scene.play(new Create(graph, { duration: 1.4 }));
+await scene.play(new Write(label, { duration: 0.8 }));
+await scene.wait(1.0);
+`
+});
+```
+
+## 3D Example
+
+```js
+new ManimAnimation({
+    x: 120,
+    y: 80,
+    width: 800,
+    height: 450,
+    manim_code: `
+const {
+    ThreeDAxes,
+    Cube,
+    Create,
+    FadeIn
+} = manim;
+
+const axes = new ThreeDAxes({
+    xRange: [-3, 3, 1],
+    yRange: [-3, 3, 1],
+    zRange: [0, 4, 1],
+    xLength: 6,
+    yLength: 6,
+    zLength: 4
+});
+
+const cube = new Cube({ color: '#22c55e', opacity: 0.75 });
+cube.scale([1.2, 1.2, 2.4]);
+cube.moveTo([0, 0, 1.2]);
+
+scene.setCameraOrientation(70 * Math.PI / 180, -35 * Math.PI / 180, 18);
+await scene.play(new Create(axes, { duration: 0.8 }));
+await scene.play(new FadeIn(cube, { duration: 0.8 }));
+await scene.moveCamera({ theta: 25 * Math.PI / 180, duration: 1.6 });
+await scene.wait(0.6);
+`
+});
+```

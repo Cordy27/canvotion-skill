@@ -1,0 +1,181 @@
+# 代码技能：视觉表现与高级质感
+
+当你需要为 LeaferJS 元素配置色彩、渐变、描边、光影质感（阴影/内阴影）、遮罩裁剪以及可见性时，加载这条规则作为实现指导。
+
+## 样式声明规范与限制
+
+- 声明式优先：必须在实例化元素时通过传入配置对象来一次性定义所有样式。绝对禁止使用 `rect.set()` 或 `rect.fill = ...` 这种命令式代码去修改样式。    
+- 对象属性覆盖：对于复杂的嵌套属性，在实例化时直接完整声明即可。
+- 可读性底线：优先使用对比强烈、专业稳妥的配色，并保证在 1080p 视频输出下仍然清晰可读。
+
+## 颜色填充与描边 
+
+- 填充：支持纯色字符串（Hex/RGBA），也支持传入对象以实现线性渐变 (`linear`)、径向渐变等高级填充。
+- 描边：除了常规颜色和线宽 (`strokeWidth`)，还可以通过 `dashPattern` 实现虚线边框，通过 `strokeAlign` 控制描边是内描边还是外描边。
+
+```javascript
+// #视觉样式 [线性渐变填充]
+const gradientBg = new Rect({
+    width: 1920,
+    height: 1080,
+    fill: {
+        type: 'linear', // 核心：声明为线性渐变
+        stops: ['#FF4B4B', '#FEB027'] // 核心：渐变颜色节点，默认从顶部到底部
+    }
+})
+
+// #视觉样式 [高级描边与虚线]
+const dashedLine = new Line({
+    width: 800,
+    stroke: '#32cd79',
+    strokeWidth: 5,
+    strokeAlign: 'center', // 核心：'inside' | 'center' | 'outside'
+    strokeCap: 'round', // 核心：端点形状变圆滑
+    dashPattern: [15, 15] // 核心：数组定义虚线的 实线长度 与 空白长度
+})
+```
+
+## 光影与质感
+- 外阴影：用于实现元素的悬浮感和层级深度。使用较低的透明度（带 Alpha 通道的颜色）使阴影更自然。
+- 内阴影：用于实现元素的凹陷感或内部发光效果。
+- 动画安全：不要把 `shadow` 和持续性的 transform 动画（例如旋转、缩放或斜切）放在同一个元素上；需要动态层级感时，把阴影放在静态外壳层，把运动放在内部内容层或父级容器上。
+
+```javascript
+// #视觉样式 [外阴影与内阴影]
+const shadowCard = new Rect({
+    width: 400,
+    height: 200,
+    cornerRadius: 30,
+    fill: '#ffffff',
+    shadow: { // 核心：外阴影定义
+        x: 0,
+        y: 10,
+        blur: 20,
+        color: 'rgba(0, 0, 0, 0.1)' // 使用 rgba 保持阴影柔和
+    },
+    innerShadow: { // 核心：内阴影定义
+        x: 0,
+        y: 5,
+        blur: 15,
+        color: 'rgba(50, 205, 121, 0.3)'
+    }
+})
+```
+
+## 遮盖、擦除与可见性 
+
+- 遮盖：将特定形状元素设为 `mask: true`。遮罩形状必须设置 `fill`，否则无像素实体会导致内容全部不可见。为了防止遮罩影响到组内的文字标签等无关元素，必须使用一个专用的 `Group` 或 `Box` 将遮罩和被遮罩的内容单独包裹隔离。
+- 橡皮擦 ：与遮罩相反。将特定形状或 `Group` 设为 `eraser: true`，它会擦除同级且位于其下层（即 add 数组的前面）的元素内容。可以给橡皮擦设置 `opacity` 来实现半透明擦除效果。
+- 橡皮擦类型避坑：根据实际渲染引擎限制，当使用 `Group` 包含多个形状作为复合橡皮擦时，请务必使用默认的 `eraser: true`。不要对其使用 `eraser: 'path'`，否则会导致擦除效果失效。
+- 可见性控制：使用 `opacity` 控制透明度（0~1）。如果用于动画的初始隐藏，必须设置 `opacity: 0`。
+
+## 透明背景与叠加素材
+
+当用户要求透明背景、透明通道、透明素材、overlay、叠加到其他视频上方，或提到给 PR / 剪映 / AE 使用时，只把它理解为画面生成约束：
+
+- 根 `Frame` 仍按普通尺寸创建，但不要设置不透明 `fill`。
+- 不要添加全画布背景矩形、全屏底图、渐变底、纯色兜底层、暗色播放器底板或绿色/黑色抠像背景。
+- 只生成可见主体、局部装饰和必要动画节点；画布空白区域必须保持透明。
+- 需要柔边或透明边缘的素材必须本身支持透明，或先生成透明素材后再引用。
+- 棋盘格、临时对比底色和预览辅助背景只属于 UI 预览，不得写入 slide code 或 JSON。
+- `project-agent` 不负责发起导出，也不在 slide code 或 skill 文本中写视频导出格式；外部 agent / Tool API 的导出层会处理导出参数。
+
+```javascript
+// #视觉样式 [使用形状作为遮罩裁剪图片]
+const maskContainer = new Group({ x: 100, y: 100 }) // 核心：使用专用容器隔离
+
+const circularMask = new Ellipse({
+    width: 100,
+    height: 100,
+    fill: 'black', // 核心：必须有 fill，否则遮罩无效导致完全透明
+    mask: true 
+})
+
+const avatarImg = new Image({
+    width: 100,
+    height: 100,
+    // 核心：严禁编造公网 URL，必须使用从上下文中获取的合法 delivery_url 变量
+    url: validDeliveryUrl 
+})
+
+maskContainer.add([circularMask, avatarImg])
+
+// #视觉样式 [使用单一形状与复合编组作为橡皮擦镂空背景]
+const eraseContainer = new Group({ x: 300, y: 100 })
+
+const bgImage = new Image({
+    width: 200,
+    height: 200,
+    url: validDeliveryUrl // 核心：同样必须使用真实合法的资产变量
+})
+
+// 单一形状橡皮擦 (支持半透明擦除)
+const translucentEraser = new Ellipse({
+    x: 20, y: 20, width: 80, height: 80,
+    fill: 'black', // 颜色并不重要，起作用的是形状与透明度
+    opacity: 0.5,
+    eraser: true 
+})
+
+// 复合形状橡皮擦 (将整个编组作为橡皮擦)
+const multiShapeEraser = new Group({
+    eraser: true, // 核心：当使用 Group 作为橡皮擦时，绝对禁止使用 'path'，必须使用默认的 true
+    children: [
+        { tag: 'Rect', x: 120, y: 120, width: 50, height: 50, fill: 'black' }
+    ]
+})
+
+// 核心：橡皮擦自身不渲染，它只负责擦除在它“下方”（即 add 数组的前面）的元素
+eraseContainer.add([bgImage, translucentEraser, multiShapeEraser])
+
+## 混合模式
+
+- 声明式配置：元素的混合模式必须在实例化时通过 `blendMode` 属性直接声明，绝对禁止通过定时器或实例属性进行运行时动态变更。
+- 模式分类与选用：
+  - 默认与性能：默认为 `pass-through`。`normal` 一般用于隔离 Group 内的混合样式以防影响外部。
+  - 色彩混合：支持设计师常用的正片叠底 (`multiply`)、滤色 (`screen`)、叠加 (`overlay`)、柔光 (`soft-light`) 等，用于制造高级的双色叠加与光影质感。
+  - 图像合成：支持 `source-in`、`destination-in`、`destination-out` 等合成操作。它可作为 `mask` 的高阶替代方案，处理复杂的图形重叠与透明区域保留。
+
+```javascript
+// #视觉样式 [使用混合模式制造色彩叠加质感]
+const blendGroup = new Group({ x: 200, y: 200 })
+
+const baseRect = new Rect({ 
+    width: 150, 
+    height: 150, 
+    fill: '#FF4B4B', 
+    cornerRadius: 20 
+})
+
+const overlayRect = new Rect({ 
+    x: 50, 
+    y: 50, 
+    width: 150, 
+    height: 150, 
+    fill: '#32cd79', 
+    cornerRadius: 50,
+    blendMode: 'multiply' // 核心：声明式应用正片叠底
+})
+
+blendGroup.add([baseRect, overlayRect])
+```
+## 文本背景框
+
+- boxStyle：`Text` 元素特有的属性，允许直接为文字添加一个背景框，而无需额外嵌套 `Box`。它支持 `Rect` 的大部分样式（`fill`, `stroke`, `cornerRadius`, `shadow`）。
+
+```javascript
+// #视觉样式 [带背景框的文本]
+const labelWithBg = new Text({
+    text: 'Canvotion UI',
+    fill: '#ffffff',
+    fontSize: 24,
+    padding: [8, 16], // 核心：必须设置内边距以撑开背景框
+    boxStyle: {
+        fill: '#32cd79',
+        stroke: '#000000',
+        strokeWidth: 2,
+        cornerRadius: 8,
+        shadow: { x: 0, y: 4, blur: 10, color: 'rgba(0,0,0,0.2)' }
+    }
+})
+```

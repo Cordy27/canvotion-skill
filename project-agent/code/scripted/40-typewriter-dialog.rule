@@ -1,0 +1,47 @@
+# Typewriter Dialog Response Rule
+
+Use this rule when the user writes words on the canvas as a message to the agent and wants the page to answer back with short lines that appear one sentence at a time in a simple typewriter rhythm.
+
+## Trigger
+
+- 用户在画布或页面批注上写字，这些字更像在留言、提问、表达情绪、发起对话，或等你“回一句”。
+
+## Default response semantics
+
+- Treat the handwritten text as user intent/context, not the final on-screen copy.
+- Default to writing a short reply through the typewriter animation instead of replaying the user's original handwriting verbatim.
+- Keep the reply concise and sentence-based so each `pushSentenceBlock(...)` still reads like one clean response beat.
+- If the user explicitly says “把我写的这几句话原样做成打字机动画”, then you may reuse the original wording sentence by sentence.
+
+## Required preset source
+
+- Do not rebuild this page from scratch when the trigger is clear.
+- Start from the bundled workspace preset:
+  - `preset-typewriter-animation.js`
+- External-basic does not expose internal preset read commands. Use this rule as the template contract, then publish the resulting page through the external page wrappers listed below.
+- Do not upload the preset file itself.
+
+## Template contract
+
+- The preset keeps one shared `Text` node on screen.
+- Each response sentence is appended by one line:
+  - `pushSentenceBlock('一句回复');`
+- When the user wants to continue the exchange later, preserve the shared base and add one more `pushSentenceBlock(...)` through an ordinary focused edit.
+- Do not switch this scene into “one sentence = one new frame/group/card” when the request is specifically about the simple dialogue typing template.
+
+## Preferred command order
+
+- `canvotion workspace prepare --all`
+- `canvotion page write --filename <focus_page> --stdin-file page.js`
+- `canvotion page verify --filename <focus_page>`
+- `canvotion page publish --filename <focus_page> --mode replace_focus`
+
+## Follow-up behavior
+
+- If the current `focus_page` already uses this template and the user wants one more reply line, keep the existing base unchanged.
+- Add only one new response step.
+- That step should only add one more:
+  - `pushSentenceBlock('...')`
+- Publish the current-page edit with `--mode replace_focus` and no continuation parameter.
+
+*注意：默认是“读懂用户写的话，再用打字机动画回一句”，不是把用户手写内容原样抄到页面上。*

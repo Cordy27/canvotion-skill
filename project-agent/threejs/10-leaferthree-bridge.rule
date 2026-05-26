@@ -1,0 +1,72 @@
+# LeaferThree Bridge
+
+Load this rule before using the upstream Three.js topic modules for repository page work.
+
+## Repository truth contract
+
+- The formal 3D page element in this repository is `LeaferThree`.
+- Persist 3D scenes through `scene_spec`.
+- Persist 3D timing through `three_timeline`.
+- Runtime-only objects such as `THREE.Scene`, `THREE.Camera`, renderers, textures, controls, or WebGL contexts are never the persisted truth.
+- AI-generated page code must create or update `LeaferThree` nodes; do not publish raw imperative `THREE.*` page code as the page truth.
+
+## Current supported persistence subset
+
+- Camera:
+  - use `scene_spec.camera.projection = "perspective" | "orthographic"`
+  - use `fov`, `near`, `far`, `zoom`, `position`, `lookAt`, and optional orthographic `bounds`
+  - do not persist `scene_spec.camera.type = "PerspectiveCamera"` or other raw class names
+- Lights:
+  - supported light types are lowercase `ambient` and `directional`
+  - do not persist `AmbientLight`, `DirectionalLight`, or other raw class names
+- Objects:
+  - supported object types are `group`, `box`, `plane`, `sphere`, and `line`
+  - do not persist raw mesh payloads such as `type: "Mesh"`, nested `geometry`, or nested `material`
+  - use `size: { x, y, z }` for object dimensions; do not use raw Three.js-style `width`, `height`, or `depth` fields
+  - use `materialId` or flat object/material fields such as `color`, `opacity`, `wireframe`, and `lineWidth`
+- Materials and assets:
+  - V1 public contract only allows built-in presets; do not publish user-upload or arbitrary external texture sources in page code
+  - declare textures through `scene_spec.assets[]` plus material `mapAssetId`
+  - put `mapAssetId` and other `*AssetId` texture references on `scene_spec.materials[]`, never on `scene_spec.objects[]`
+  - every published asset must declare `sourceType: "builtin"` together with `presetId`
+  - supported built-in asset presets are:
+    - `blueprint-grid`
+    - `checker-carbon`
+    - `brushed-steel`
+  - every published material must declare `presetId`
+  - supported built-in material presets are:
+    - `flat-poster-red`
+    - `matte-slate`
+    - `studio-plastic`
+    - `machined-aluminum`
+    - `dark-chrome`
+  - `url` / `fileId` asset sources remain internal repository capabilities for future or migration paths; they are not part of the current public authoring contract
+  - do not assume env maps or other advanced texture slots already have visible runtime output
+- Timeline:
+  - use `three_timeline.tracks[]` with explicit `target`, `property`, and `keyframes`
+  - each keyframe must use `{ time, value }`; put the animated field in `property` such as `position.x`, `rotation.y`, `scale`, or `lookAt`
+  - do not use `keys`, animation clips, mixers, or custom render loops as persisted page truth
+
+## Translation rules
+
+- Translate upstream scene setup knowledge into `scene_spec.camera`, `scene_spec.lights`, `scene_spec.materials`, and `scene_spec.objects`.
+- Translate upstream animation knowledge into `three_timeline.tracks`, not custom render loops.
+- Translate upstream loader knowledge into repository-supported declarative assets and object/material references when possible.
+- For published page code, emit built-in preset references instead of `url` or `fileId` texture payloads.
+- If an upstream technique depends on a runtime feature that `LeaferThree` does not currently support, say so plainly and choose the closest supported declarative fallback instead of inventing a new persistence format.
+
+## Authoring rules
+
+- For page generation and focused edits, continue to follow the repository `Frame` contract. External-basic does not expose previous-end continuation publish.
+- For repository page tasks, pair this rule with the relevant topic modules, for example:
+  - `project-agent/threejs/fundamentals` for camera and scene structure
+  - `project-agent/threejs/lighting` for lighting rigs
+  - `project-agent/threejs/animation` for `three_timeline`
+  - `project-agent/threejs/loaders` for model or texture ingestion strategy
+
+## Explicit guardrails
+
+- Do not output `new THREE.WebGLRenderer()` or standalone DOM canvas setup inside repository page code unless the user explicitly asks for an external standalone demo.
+- Do not persist raw imperative `THREE.*` graphs.
+- Do not bypass `LeaferThree` by creating a DOM overlay for formal page content.
+- If a requested Three.js technique does not fit the supported persistence subset above, state that limitation explicitly and choose the closest supported declarative fallback.

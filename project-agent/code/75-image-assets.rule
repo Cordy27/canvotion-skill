@@ -1,0 +1,49 @@
+# 图片资产接入规则
+
+当页面需要照片、插画、图标、logo、纹理或其他图片素材时，加载这条规则。
+
+## 外部 CLI 能力边界
+
+- `external-basic` 只开放用户本地图片上传：`canvotion image upload --file <local-path> --summary <text>`。
+- 外部 agent 不支持图片检索、图片下载、任意 URL 抓取、SVG 写入、图片 inspect 或内部图片工具。
+- 用户给出的本地路径只作为上传输入。最终 page code 只能写 Tool API 返回的当前项目 `delivery_url`。
+- 如果用户没有提供本地图片文件，也没有已有项目 `delivery_url`，退回 Leafer 图形、文本、Manim 或 Three.js 内置资产方案；不要编造外部图片 URL。
+
+## 何时使用
+
+- 先在开头做一轮素材计划判断；只有当某个镜头确实需要用户本地图片，或已有项目图片 `delivery_url` 时，才加载这条规则。
+- 如果你已经决定全部镜头都可以用 `leafer_shapes` 完成，就不要为了“先看看有没有图”而预加载本规则，也不要调用图片上传命令。
+- 用户明确要求“加图 / 插入图片 / 使用这张本地图片 / 换成某个已上传图片素材”。
+- 当前 draft、页面批注或已有页面里出现了图片占位，需要补成用户提供的本地图片或已有项目图片资产。
+- 用户给出本地 PNG、JPEG 或 SVG 文件路径，并希望把它作为正式项目图片接入页面。
+
+## 默认素材决策
+
+- 对于完整动画、分幕分镜或多个 draft 的任务，写代码前先为每个分镜整理素材计划。单页可以混合用户本地图片、已有项目 `delivery_url`、原生 Leafer shapes、文本、Manim 或 3D，不要强行把整页压成一种主要策略。
+- 这个判断必须发生在真正加载图片资产规则和调用图片上传之前，不要在没有用户本地文件或已有 `delivery_url` 时尝试寻找外部图片。
+- 以下内容只有在用户提供本地图片或已有 `delivery_url` 时才使用图片资产：人物/机器人剪影、真实物体、产品、动物、蛋糕、logo、设备界面、城市或办公室场景、强识别性的照片感插画。
+- 以下内容优先考虑 Leafer shapes、Path 或 Manim：公式、任务拆解模块、拉锯图、分布曲线、饼图、树状分叉、箭头流程、几何示意图。
+- 只有当镜头本来就是抽象图解，或者图片会明显分散注意力时，才用纯 Leafer 基础图形完成；不要把明显需要可识别主体的镜头简化成通用矩形占位。
+- 如果你已经决定某个分镜要落图片资产，最终 page code 里就要真的接入对应 `delivery_url`；不要在实现阶段默默把这个镜头降级成纯文字或空占位。
+
+## 本地图片上传流程
+
+- 用户在本地引用图片时，直接提供本地路径，例如 `./cover.png` 或 `C:\Users\me\cover.png`。
+- 先运行 `canvotion image upload --file <local-path> --summary "<简短摘要>"`。
+- 上传成功后记录返回的 `delivery_url`。
+- 在 page code 中使用 `Image({ url: "<delivery_url>" })` 或其他登记过的图片入口。
+- 不要把本地绝对路径、相对路径、`file://`、blob URL、base64 或外部公网 URL 写进 page code。
+- 如果用户提供的是 SVG 文件，也走同一个本地上传 wrapper；不要调用内部 SVG 写入命令。
+
+## Page Code 合同
+
+- `Image` 节点的 `url` 只能使用上传成功后返回的项目资产 `delivery_url`。
+- 不要把本地路径、图库原链、`download_url`、workspace 本地路径、临时文件名或 base64 数据直接写进 page code。
+- 当前图片资产链路只接受 `png / jpeg / svg`；格式识别和解析交给工具链与 Leafer image，不要自己发明额外解析字段。
+- 用户手动上传的图片如果已经有项目资产 `delivery_url`，直接复用这条地址，不要重复下载或重复上传。
+- verifier 会拒绝本地路径、`file://`、base64、blob 和任意外链。runtime verification 会在 publish/render 前确认对应 `project_assets` 记录真实存在、属于当前项目、类型为 image、未删除且有可用 storage。
+
+## 失败处理
+
+- 上传失败时，不要跳过上传步骤假装成功，也不要把本地路径直接写入 page code。
+- 如果用户没有提供可上传图片，就明确说明需要本地图片路径或已有项目 `delivery_url`，并退回纯图形 fallback；这个 fallback 也要保持原本想表达的主体可识别，而不是只剩抽象方块。

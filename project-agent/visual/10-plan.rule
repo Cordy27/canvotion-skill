@@ -1,0 +1,35 @@
+# Page Visual Plan Rule
+
+Load this rule when you need the visual planning structure for one page or scene.
+
+## Inputs to honor
+
+- Current page content
+- Theme title
+- Overall visual style
+- Previous page visual plan, when provided, as continuity context
+- Selected visual skills and code skills
+
+## Required planning structure
+
+- `Overall Narrative`
+  - State the core message of the scene, how it fits the larger story, and the intended emotional impact.
+- `Learning Objectives`
+  - State what the viewer should learn or understand from this scene and which concepts must be emphasized.
+- `Visual Flow`
+  - Describe the sequence of visual moments, transitions between ideas, pacing, and where pauses or rapid actions happen.
+
+## Code skill derivation
+
+- Derive `code_skills` from the plan instead of guessing them later during implementation.
+- If the plan includes a curved orbit, trajectory, or custom path, include `motion_path`.
+- If the plan includes standard transitions, keyframes, staged motion, or timed entrances, include `animation`.
+- Keep the `code_skills` list constrained to the skills that are actually necessary to implement the page.
+
+## Output contract
+
+- Use the previous page visual plan only to keep continuity, not to duplicate the prior composition.
+- Keep the plan detailed enough that page code can be produced without inventing the scene from scratch.
+- This rule describes one page or scene. It does not store the project outline and must not be used to fill the outline overview table.
+- If the task is a project outline, storyboard, numbered scene list, or user-supplied outline, switch to `project-agent/plan/outline` and use `canvotion plan write --stdin-json-file <plan.json>` plus `canvotion plan publish` instead of returning chat markdown or fenced JSON.
+- For one-page visual planning, return concise structured guidance only when the user is asking for discussion or critique; when implementing, proceed to the relevant code commands.

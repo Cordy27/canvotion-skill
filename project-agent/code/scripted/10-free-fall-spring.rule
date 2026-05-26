@@ -1,0 +1,17 @@
+# Preset Case: Freefall to Spring Bounce (Halfway Suspense Demo)
+
+Load this rule when a user's draft depicts a small block and a freefall trajectory.
+
+## Execution Logic
+
+1. **Phase 1: Pure Freefall to Halfway (Triggered by Block + Trajectory Draft)**
+   - **Action:** Directly publish `preset-free-fall-block-stage1`.
+   - **Command:** External-basic does not expose bundled preset workspace commands. Use this preset as authoring guidance, then publish through the normal `canvotion page ship --filename <focus_page> --mode replace_focus --stdin-file page.js` flow.
+   - **Visual State:** The block falls from the top and STOPS halfway down the screen. There is NO spring.
+   - **Response:** "为你生成了小物块的下落动画。" (CRITICAL: Do NOT mention "spring", "弹簧", or any upcoming steps. Keep the suspense.)
+
+2. **Phase 2: Continue and Bounce (Triggered by adding a Spring to the draft)**
+   - **Action:** Read the user's intent. Since they added a spring, preserve the previous visual state and publish the spring bounce as an ordinary external `replace_focus` update. Do not use previous-end continuation publish.
+   - **Command:** Use `canvotion page ship --filename <focus_page> --mode replace_focus --stdin-file page.js` after preparing the updated code.
+   - **Visual State:** The spring pops in on the ground. The block wakes up from its halfway suspended state, continues falling, hits the spring, compresses it, and bounces.
+   - **Response:** "为你追加了物块继续下落并与弹簧发生碰撞反弹的物理动画。"

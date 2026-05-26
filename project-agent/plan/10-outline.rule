@@ -1,0 +1,111 @@
+# Outline Rule
+
+Load this rule when you need the structured outline contract for multi-step planning.
+
+## Planning scope
+
+- Build a structured outline for a 2D MG animation deck or keynote-like presentation.
+- Act as a motion designer first, then choose implementable Canvotion elements. Use the work standards of Saul Bass, Elaine Bass, Pablo Ferro, Kyle Cooper, and Maurice Binder as references for strong metaphor, sequencing, timing, contrast, and graphic clarity.
+- Evaluate audience, purpose, and whether user-provided image files, existing project `delivery_url` assets, native Leafer shapes, Manim, 2.5D projection, video, data visualization, voiceover, or other stack elements would materially help.
+- Keep the outline centered on one storyline and one cohesive visual and motion language shared across pages.
+- A single page may combine project image assets, native Leafer shapes, text, 2.5D projection, Manim, voiceover, and video ingredients. Describe that mix inside `scene_brief`; do not force a page into one asset category.
+- `scene_brief` must also state exactly what the narration says on that page; if the page has no narration, it must explicitly say "no narration" and provide a visual rhythm cue instead of leaving the field blank.
+- `scene_brief` must also state which elements the page uses, and those elements must be concrete and compatible with the element decision matrix rather than a vague "visual presentation" note.
+- Do not use real Three.js / `LeaferThree` in new outlines unless the user explicitly asks for true 3D. For depth, camera-like emphasis, flips, tilts, and layered panels, use `LeaferProjection` as the 2.5D option.
+
+## Element decision matrix
+
+- Use `native Leafer shapes` for motion carrier layers: text blocks, simple geometry, highlight bands, masks, paths, layout groups, movement, scale, rotation, opacity, morph-like staging, and lightweight state changes. Do not make native shapes the default visual strategy for every page.
+- Use native Leafer shapes, Path, text, charts, or Manim when the page needs polished explanatory graphics: formulas, charts, arrows, network diagrams, complex infographics, icon systems, custom pictograms, metaphor diagrams, or any visual that should look designed rather than assembled from primitive rectangles.
+- Use `project_image_asset` only when the user provides a local image file that can be uploaded through `canvotion image upload`, or when the project already has a usable `delivery_url` for a real person, product, place, device, brand, screenshot, or another visually recognizable subject.
+- Use `Manim` when the page needs mathematical motion, equation transitions, probability or optimization intuition, matrix changes, or other formal derivations.
+- Use `LeaferProjection` for 2.5D page tilt, card flips, panel rotation, layered depth, parallax-like emphasis, or camera-like motion that should stay inside the 2D renderer.
+- Use `video` only when the user already has video material or the scene must show continuous external footage.
+- Use `voiceover` by default for MG explanatory animation unless the user asks for silent visuals; narration and word-triggered timing are part of the page rhythm.
+- Choose at most 1-2 primary elements per page. Any additional element should support the primary element instead of competing with it.
+- For each page, explicitly name the primary element type and why it is not just native Leafer shapes. If native shapes are the primary element, explain the motion/design reason.
+
+## Page writing pattern
+
+- Write the page from the audience outcome backward: what should the user understand first, second, and last.
+- State the page in this order: purpose, visible subject, primary element, supporting element, motion, and handoff to the next page.
+- Every page brief must explicitly include narration and elements: narration says what is spoken on the page, and elements says what carries the page visually.
+- Keep each page readable by a human at a glance; if a sentence is doing more than one job, split it.
+- Write every `action_groups[].description` in this shape: `[trigger] causes [element] to move from [state A] to [state B], so the audience understands [cognitive result].`
+
+## Narration mapping
+
+- If a page uses voiceover, write the narration sentence or phrase in the page brief, and make each beat's trigger point explicit.
+- If a page has no voiceover, the page brief must still say "no narration"; do not leave the narration field empty.
+- `beat_cue` must name the exact spoken word or phrase that starts the beat. Do not write a vague "while narrating" cue.
+- When one narration sentence drives several beats, split it into multiple trigger phrases so each beat has one clear anchor.
+- For Chinese/Han narration, prefer the shortest contiguous phrase that matches the timing data; if the beat starts on one word, use that word.
+- The implementation layer will map this cue to `triggerAtWord` later, so the outline stage must get the trigger text right first.
+
+## Knowledge-topic structure
+
+- For finance, math, science, engineering, or other abstract explanatory topics, do not make a flat topic tour.
+- Build the outline as a cognitive chain:
+  1. The user's existing problem or intuition.
+  2. Why the familiar method is insufficient.
+  3. The new variable, mechanism, or model.
+  4. How that mechanism changes the result.
+  5. The one thing the audience should remember.
+- Each page should carry one cognitive step. If one page needs two steps, split it.
+- Choose elements by cognitive job: use native diagrams for relationships, Manim for formal transformation, designed charts for result changes, 2.5D projection for depth or layered comparison, project image assets only when a valid user-provided or existing `delivery_url` asset is available, and voiceover for reasoning that would overload the visuals.
+
+## Hard product constraints
+
+- In this product, every outline task is machine-readable whenever plan tools are available. Do not treat outline requests as a chat-only human-readable response.
+- The outline overview page is not a page and is not `page-001`. Do not create a page, do not run `canvotion page write`, and do not build an outline table component for outline storage.
+- Use only the v2 project-level `animation_outline` schema. The required version is `version = 2`.
+- All outline time values are seconds. Do not use millisecond fields.
+- Each page should usually last `10-20 seconds`; never plan a page longer than `30 seconds` unless the user explicitly asks for a longer continuous shot.
+- `total_duration_s` is a user-facing reference input for the whole outline duration; do not derive it from page durations.
+- Split every page into enough action groups to keep the motion lively; do not stretch one sparse action across a long page.
+- Do not include promotional elements, subscribe messages, external resources, or quiz sessions unless the user explicitly asks for them.
+
+## MG director method
+
+- Start from the visual metaphor, then write the page. Do not start from a text list.
+- `creative_brief` is the whole-animation director brief: audience, narrative tone, shared visual metaphor, motion language, color direction, typography direction, and how pages should feel connected.
+- `scene_brief` is the page-level MG storyboard brief: core message, concrete visual subject, foreground/midground/background, text safe area, attention path, material or asset choices, transition hook from the previous page and into the next page, and implementable notes for Leafer/Manim/2.5D projection/video/project image assets.
+- Every `action_groups[].description` must be director-level motion design, not a movement list. It should explain the beat purpose, participating elements, start state, end state, motion quality, visual feedback, and how the beat hands off to the next beat.
+- Every `action_groups[].beat_cue` must be filled. If there is voiceover, use the short phrase that triggers the beat. If the page is silent or visual-only, name the visible rhythm cue, such as "when the red congestion line reaches the center" or "after the title hold".
+- Use motion language only when it helps the page communicate the element choice or the user's understanding; avoid stacking multiple effect types on the same beat unless one is clearly primary.
+- Prefer motion that clarifies the argument: fade, page, highlight, morph, compare, isolate, reveal, and count are often enough.
+- Keep effects implementable with current Canvotion stack: native Leafer shapes, text, uploaded project image assets, native vector shapes, motion paths, keyframes, supported easing names, Manim specs, LeaferProjection for 2.5D, video and voiceover. Do not introduce real Three.js unless the user explicitly asks for true 3D.
+
+## Workflow
+
+- When this is the first user requirement for a new animation or deck, prefer writing a project outline first. Only skip this planning-first path when the user explicitly asks for direct implementation.
+- If the requirement is unclear, ask concise clarification questions before writing the outline. Do not invent missing product semantics, target audience, style, duration, or scene structure.
+- When the user asks for an animation outline, storyboard, numbered scene list, project plan, or when this planning-first path applies, first run `canvotion workspace prepare --all`, then `canvotion plan read`.
+- Treat a user-supplied outline, storyboard, numbered scene list, or page-by-page plan as source material. Preserve order, key message, visual direction, timing hints, and asset notes, but convert it into the single v2 schema.
+- Before writing the plan, compress each page into a readable element choice and one clear attention path.
+- Write the plan with `canvotion plan write --stdin-json-file <plan.json>` or `canvotion plan write --stdin-json-file -`, then save it with `canvotion plan publish`.
+- Do not return a markdown table, numbered markdown outline, fenced JSON block, or prose outline when the plan commands are available. The final answer should only tell the user to review the outline overview table.
+
+## Required schema fields
+
+Use exactly this schema in the JSON payload for `canvotion plan write --stdin-json-file`.
+Every field listed below is mandatory. Do NOT leave `scene_brief`, `beat_cue`, or `description` empty.
+
+- `project_id` — current project id
+- `plan_kind = "animation_outline"`
+- `version = 2`
+- `creative_brief` — whole-animation director brief: audience, narrative tone, shared visual metaphor, motion language, color direction, typography direction
+- `aspect_ratio` — e.g. `"16:9"`
+- `total_duration_s` — user-facing reference input for the whole outline duration; keep the value you intentionally choose or the user provided
+- `pages[].page_id` — e.g. `"page-1"`, `"page-2"`
+- `pages[].page_index` — 1-based page number
+- `pages[].title` — short page title for the outline table
+- `pages[].duration_s` — page duration in seconds (10–20 s typical, max 30 s)
+- `pages[].scene_brief` — **page-level MG storyboard brief**: core message, concrete visual subject, foreground/midground/background composition, text safe area, attention path, primary element type, material or asset choices (project image asset/native Leafer/2.5D projection/Manim/video/voiceover), transition hooks from/to adjacent pages, and why native Leafer shapes are or are not the primary visual carrier. This field populates the "分镜 BRIEF" column in the outline table. It must NOT be empty.
+- `pages[].action_groups[]` — array of action beat objects, each with:
+  - `group_id` — e.g. `"action-1"`
+  - `start_s` — beat start time within the page (seconds)
+  - `duration_s` — beat duration (seconds)
+  - `description` — **director-level motion design**: beat purpose, participating elements, start state → end state, motion quality (easing, overshoot, stagger…), visual feedback, handoff to next beat. This populates the "动作节拍" column. Must NOT be empty.
+  - `beat_cue` — **trigger cue**: if there is voiceover, use the short phrase that triggers this beat; if the page is silent, name the visible rhythm cue (e.g. "标题停留结束后" or "红色拥堵线到达中心时"). This populates the "触发 CUE" column. Must NOT be empty.
+- `pages[].target_page_filename` — keep empty until a real page is known or explicitly assigned

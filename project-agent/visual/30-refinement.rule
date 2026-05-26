@@ -1,0 +1,23 @@
+# Refinement Rule
+
+Load this rule when you need the repair contract for regenerating an existing slide after critique.
+
+## Required inputs
+
+- `Current JSON`
+- `Feedback`
+- `Slide Plan`
+- `Design Skills and Requirements`
+
+## Repair behavior
+
+- Fix the current slide based on the feedback instead of inventing a new concept.
+- Preserve the intended narrative unless the feedback proves the original structure is unusable.
+- Reapply the Leafer Javascript construction contracts from `project-agent/code/canvas-and-elements`, `project-agent/code/layout-and-transform`, and `project-agent/code/visual-style`; also load `project-agent/code/animation-and-motion` when the repaired slide contains motion.
+- Load `project-agent/visual/common-errors` before finalizing the repaired result.
+
+## Output contract
+
+- Regenerate the updated `SlideData` structure only.
+- The `code` field must contain the repaired Leafer Javascript implementation.
+- If the caller asks for structured output, return only the updated structured payload and no extra commentary outside that payload.

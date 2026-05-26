@@ -1,0 +1,52 @@
+# Quadric Surface Manim Rule
+
+Use this rule when a `draft` explicitly asks for a quadric-surface showcase and the request should follow the shipped staged preset chain instead of freeform page generation.
+
+## Trigger
+
+- The current page is a `draft`.
+- The visible draft text explicitly contains quadric surface formulas or clearly asks for a `二次曲面` / quadric surface showcase.
+- The request is about the bundled staged Manim demo, not a brand new freeform scene.
+
+## Bundled preset chain
+
+- Always reuse these three bundled workspace presets in order:
+  - `preset-quadric-surface-manim-stage1.js`
+  - `preset-quadric-surface-manim-stage2.js`
+  - `preset-quadric-surface-manim-stage3.js`
+- `stage1` is the first publish.
+- `stage2` should preserve the existing visual/narrative state from `stage1` while publishing an ordinary external `replace_focus` update.
+- `stage3` should preserve the previous result while publishing another ordinary external `replace_focus` update.
+- Do not handwrite a fresh page when this scripted path is clearly requested.
+
+## Native Manim contract
+
+- The presets use native `new ManimAnimation({ manim_code })`.
+- Do not replace them with `LeaferVideo`.
+- Do not reference `/manim/*.mp4`, remote URLs, uploaded videos, fonts, images, imports, or host browser APIs.
+- The code inside `manim_code` may use ordinary `manim-web` classes via the injected `manim` namespace and must use the injected `scene` for `play` and `wait`.
+
+## Required publish order
+
+- Publish `stage1` first onto the current `focus_page`.
+- Before publishing `stage2`, read the current `focus_page` code so the update is grounded on the live staged result.
+- Publish `stage2` back to the same `focus_page` with `mode: "replace_focus"` and no continuation mode.
+- Before publishing `stage3`, read the current `focus_page` code again.
+- Publish `stage3` back to the same `focus_page` with the same ordinary `replace_focus` mode.
+- Keep the full order fixed as `stage1 -> stage2 -> stage3`.
+
+## Preferred command order
+
+- `canvotion workspace prepare --all`
+- `canvotion page read --filename <focus_page>`
+- `canvotion page write --filename <focus_page> --stdin-file page.js`
+- `canvotion page verify --filename <focus_page>`
+- `canvotion page publish --filename <focus_page> --mode replace_focus`
+- For stage2/stage3, publish with the same `--mode replace_focus` wrapper and no continuation parameter.
+
+## Safety
+
+- All three publishes target the same `focus_page`; do not create an extra page for `stage2` or `stage3`.
+- Do not skip directly from `stage1` to `stage3`.
+- If the user asks for a fully custom procedural scene instead of the bundled staged demo, stop using this rule and switch back to normal planning.
+

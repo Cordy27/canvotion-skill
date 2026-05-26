@@ -1,0 +1,157 @@
+# 代码技能：画布与基础图元
+
+当你需要初始化 Leafer 根画布结构、设定坐标系，或实例化各种基础形状与文本图元时，加载这条规则作为实现指导。
+
+ ## 元素的创建方式
+
+- 标准创建：强使用 `new ClassName({...})` 的标准对象实例化模式，在受控环境中，只允许实例化白名单内的类。
+- 避免多余 API：禁止使用 `元素.one()` 快捷创建或直接挂载 JSON 数据，保持代码以 JavaScript 实例化逻辑为主。
+- 画布底座合同：以 `new Frame({ width: 1920, height: 1080 })` 起手作为根节点，认知原点 `(0,0)` 在左上角，中心点为 `(960,540)`。
+- 项目根节点合同：page code 必须显式写出 `const frame = new Frame({ width: 1920, height: 1080 })`，最后以 `return frame` 返回根节点；不要假设运行时已经存在全局 `frame`。
+- 构图底座合同：除非设计刻意保留留白，否则应尽量铺满完整 1920px 宽度；相关元素用 `Group` 和 `Box` 组织，不要把无关节点散落在根 `frame` 上。
+- 代码表达：当过程式生成能让页面更清晰或更稳健时，可以使用变量、循环、数学函数、数组和对象。
+
+```javascript
+// #创建元素 [标准实例化模式与根画布合同]
+// 核心：使用 1920x1080 的 Frame 作为 page 根节点
+const frame = new Frame({ width: 1920, height: 1080 })
+
+const rect = new Rect({
+    x: 100,
+    y: 100,
+    width: 100,
+    height: 100,
+    fill: '#32cd79' // 核心：设置背景填充色
+})
+// 挂载逻辑交由外部组装，此处仅演示元素生成
+```
+
+## 基础图形元素
+
+- Rect (矩形)：支持绘制矩形与圆角矩形，圆角可通过数组精准控制四个角的弧度。
+- Ellipse (椭圆/圆/扇形)：利用 innerRadius可实现圆环，结合 startAngle 和 endAngle 可绘制扇形。
+- Line (线条)：控制起点/终点坐标，并通过 stroke 设定颜色与粗细。
+- Polygon (多边形)：只用于闭合区域，例如六边形、三角形、封闭图标块；它会隐式闭合最后一个点到第一个点，禁止用来表达开放折线、走势图、箭头轨迹或描边生长路径。
+- Path (路径)：专用于承接 SVG 路径字符串，是项目环境内实现复杂图形的唯一指定图元（禁止使用 Pen）。开放折线、走势图和运动轨迹必须使用不带 `Z/z` 闭合命令的 `Path`。
+- 受控类限制：禁止在代码中实例化 Star。 
+
+```javascript
+// #图形元素 [绘制非对称圆角矩形]
+const customRect = new Rect({
+    width: 100,
+    height: 100,
+    fill: '#32cd79',
+    cornerRadius: [0, 40, 20, 40] // 核心：按 左上、右上、右下、左下 顺序独立设置圆角
+})
+
+// #图形元素 [绘制扇形圆环]
+const sectorRing = new Ellipse({
+    width: 100,
+    height: 100,
+    startAngle: -60,
+    endAngle: 180, // 核心：设置起始与结束角度形成扇形
+    innerRadius: 0.5, // 核心：0.5 代表内部镂空 50%，从而形成圆环而非实心饼图
+    fill: "#32cd79"
+})
+
+// #图形元素 [绘制多边形]
+const hexagon = new Polygon({
+    width: 100,
+    height: 100,
+    sides: 6, // 核心：设定为六边形
+    cornerRadius: 10, // 核心：使多边形的角变得圆滑
+    fill: '#32cd79'
+})
+
+// #图形元素 [纯 SVG 路径字符串绘制]
+const svgPath = new Path({
+    scale: 0.1,
+    path: 'M945.344 586.304c-13.056...（省略长字符）...491.136 64z', // 核心：直接传入合法 SVG path 描述
+    fill: '#32cd79'
+})
+```
+
+## 外部资源与画布处理
+
+- 图像资产安全：挂载外部图片资源时，Image({ url }) 只能使用当前项目资产上传后返回的 delivery_url。绝对禁止直接写公网 URL、workspace 本地路径、Base64 或下载源地址。
+- SVG 高清渲染：如果需要加载纯 SVG 的 XML 字符串，必须使用 Path 图元，或者在合法链路下转为项目资产。在受控环境中，禁止依赖 Platform.toURL，以避免非预期的系统级转换。
+- 文本排版：支持多行文本输出。基于 1920x1080 画布，需保证文字足够大且对比清晰。
+- 文本字号：标题通常应为 `80px+`，小标题通常应为 `60px+`，正文通常应为 `40px+`，辅助说明文字通常应为 `24px+`。
+- 行高限制：不要把 `lineHeight` 写成普通数字；要么使用 Leafer 的百分比对象格式，要么直接省略。
+- 文档型页面：用 `Text` 放文本内容；宽度受限时使用 `textWrap: "normal"` 或手动换行；用 `Box` 做卡片与容器，用 `Group` 把标题/副标题、列表项等相关内容聚合。
+- 受控类限制：绝对禁止在 page code 中实例化 Canvas 执行底层像素操作。
+
+```javascript
+// #资源加载 [受控 Image 加载]
+const safeImage = new Image({
+    // 核心：url 必须是 canvotion image upload 返回的当前项目 delivery_url
+    url: projectImageDeliveryUrl, // 核心安全红线：严禁编造公网 URL，必须使用从上下文中获取的合法 delivery_url 变量
+    width: 400,
+    height: 300
+})
+
+// #资源加载 [文本高级排版与占位符]
+const titleText = new Text({
+    x: 50,
+    y: 50,
+    text: '', // 初始为空
+    placeholder: '请输入标题内容...', 
+    placeholderColor: 'rgba(120,120,120,0.5)',
+    fontSize: 60,
+    fontWeight: 'bold',
+    fill: '#333333',
+    fontFamily: 'Arial, "Microsoft Yahei"', // 核心：多个字体用逗号隔开
+    letterSpacing: 2,
+    lineHeight: { type: 'percent', value: 1.5 }, // 核心：推荐使用百分比行高
+    padding: [10, 20],
+    textAlign: 'center',
+    verticalAlign: 'middle'
+})
+```
+
+## 组元素与容器结构
+
+- Group 元素：纯粹的逻辑编组工具。自身没有任何外观样式，且不支持背景、描边，子元素使用相对于 Group 的局部坐标系。主要用于整体运动入口，显式写 x / y / around。  
+- Box 元素：综合性 UI 容器。既能像 Group 一样嵌套子元素，又具备 Rect 的所有视觉外观，包括背景、圆角、阴影等。
+- Frame 元素：顶级画板或视口容器。继承自 Box，自带背景，且核心特征是会自动裁剪掉超出其宽高的内部元素（相当于 clip: true）。在复合组件中，通常作为 viewport 使用。  
+- 多子节点挂载：当父节点需要挂载多个同级子节点时，使用 `parent.add([childA, childB])`、多次 `parent.add(child)`，或 `parent.addMany(childA, childB)`；不要写 `parent.add(childA, childB, childC)`。
+- 数量自检：当 prompt 明确给出数量时，代码里必须保留同样数量的真实实例，并在挂载完成后自检这些实例都已进入场景。
+- 视频/媒体占位：需要播放器式表达时，把缩略图 `Image` 或深色 `Rect` 背板、播放按钮和进度条组织进同一个 `Group`；视频区域应接近 16:9，播放按钮用显式坐标或父级对齐居中。
+- 专题组件入口：使用 `ManimAnimation` 前加载 `project-agent/code/manim`；使用 `LeaferVoiceover` 前加载 `project-agent/code/voiceover`；使用 `LeaferProjection` 前加载 `project-agent/code/projection`；准备保存、验证或发布 page code 前加载 `project-agent/code/workspace-publish`。
+
+## 项目级输出补充
+
+- 外部 `external-basic` 不开放 continuation publish；新生成页面可以保留普通、完整的页面结构，但不要为了外部发布主动编写 `@continuation-block` 追加链路。
+- 当用户要求继续当前焦点页时，在外部 CLI 中按普通 `replace_focus` 修改并验证当前 page；不要使用 previous-end continuation 发布语义。
+
+
+```javascript
+// #容器构建 [Group 作为整体控制节点批量挂载子元素]
+const rect = new Rect({ width: 100, height: 100, fill: '#32cd79' })
+const ellipse = new Ellipse({ x: 50, y: 50, width: 100, height: 100, fill: "#FEB027" })
+
+const componentRoot = new Group({ 
+    x: 100, 
+    y: 100,
+    around: 'center' // 核心：控制变换中心，不负责子元素自动居中
+}) 
+componentRoot.add([rect, ellipse]) // 核心：使用数组形式一次性批量挂载
+
+// #容器构建 [Box 嵌套与外观属性]
+const styledBox = new Box({ 
+    width: 200, 
+    height: 150, 
+    fill: '#f0f0f0', 
+    cornerRadius: 16 
+})
+const innerCircle = new Ellipse({ x: 100, y: 75, width: 50, height: 50, fill: '#FEB027', around: 'center' })
+styledBox.add(innerCircle)
+
+// #容器构建 [具有裁剪功能的 Frame 视口]
+const viewport = new Frame({ 
+    width: 200, 
+    height: 200 // 核心：Frame 默认自动裁剪超出自身尺寸的子元素
+})
+const overflowingRect = new Rect({ x: 150, y: 150, width: 300, height: 300, fill: '#32cd79' })
+viewport.add(overflowingRect)
+```

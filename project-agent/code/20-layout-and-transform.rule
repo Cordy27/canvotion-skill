@@ -1,0 +1,165 @@
+# 代码技能：元素布局与变换
+
+当你需要确定元素的绝对坐标、设置尺寸、执行缩放旋转、实现镜像翻转或轴向倾斜时，加载这条规则作为实现指导。
+
+## 布局与尺寸声明
+
+- 声明式坐标：必须在实例化时直接计算并传入 `x` 和 `y`。绝对禁止使用 `move()`、`moveInner()`、`moveWorld()` 等命令式位移方法。
+- 尺寸定义：使用 `width` 和 `height` 定义基础尺寸。绝对禁止使用 `resizeWidth()` 或 `resizeHeight()` 等增量调整方法。
+- 负尺寸禁令：禁止为元素设置负数的 width 或 height。
+- 复合组件结构：对复杂组件，先拆成 `componentRoot -> shell / viewport / contentGroup`，不要把外壳、裁剪和内容混在一个节点职责里。
+- 组件整体运动：`componentRoot` 优先使用 `Group`，显式写 `x / y / around`，并作为唯一整体运动入口；内部 `shell / viewport / contentGroup` 默认保持稳定局部坐标。
+- 裁剪边界：`clip: true` 只写在 `viewport`；内部内容统一放进 `contentGroup`，不要靠隐式位置硬对齐。
+- 并列元素展开：多个并列或一起展示的元素必须显式写各自的 `x / y` 展开位置；旋转只负责姿态，不负责拉开间距。
+
+```javascript
+// #元素布局 [基础定位与尺寸声明]
+const baseRect = new Rect({
+    x: 100, // 核心：绝对定位 X
+    y: 100, // 核心：绝对定位 Y
+    width: 200,
+    height: 150,
+    fill: '#32cd79'
+})
+```
+
+## 变换、镜像与倾斜
+
+- 静态形变：所有的缩放、旋转、倾斜必须通过属性静态声明。禁止使用 scaleOf()、rotateOf()、flip()、skewOf() 等增量操作方法。
+- 镜像翻转：通过将 scaleX 设置为 -1 实现水平镜像，将 scaleY 设置为 -1 实现垂直镜像。
+- 旋转与倾斜：使用 rotation 声明旋转角度（-180 到 180），使用 skewX 和 skewY 声明轴向拉伸倾斜（-90 到 90）。
+- 变换合成顺序：LeaferJS内部合成矩阵的顺序为：rotate -> skew -> scale -> translate。
+
+```javascript
+// #元素变换 [旋转、倾斜与镜像翻转]
+const transformBox = new Rect({
+    x: 500,
+    y: 300,
+    width: 100,
+    height: 100,
+    fill: '#4DCB71',
+    rotation: 45,  // 旋转 45 度
+    skewX: 15,     // X 轴倾斜 15 度
+    scaleX: -1     // 核心红线：利用负数 scaleX 实现水平镜像翻转，禁止使用 width: -100
+})
+```
+
+## 偏移属性
+
+- 相对偏移：使用 `offsetX` 和 `offsetY` 可以在不改变元素基础定位坐标（`x`, `y`）的前提下，在渲染层面对元素进行相对位置的平移。
+- 视觉应用：非常适合用来做纯视觉的图层错位，或者在组合图形中微调某个子元素的视觉重心，而不影响其实际的布局排版坐标。
+
+```javascript
+// #元素布局 [利用 offset 实现纯视觉错位叠加]
+const offsetGroup = new Group({ x: 200, y: 200 })
+
+// 底层伪阴影（坐标依然是默认的 0,0，只通过 offset 产生偏移）
+const fakeShadow = new Rect({
+    width: 100,
+    height: 100,
+    fill: 'rgba(0,0,0,0.2)',
+    offsetX: 15, // 核心：向右下偏移 15px 产生错位感
+    offsetY: 15
+})
+
+// 顶层主图元
+const mainRect = new Rect({
+    width: 100,
+    height: 100,
+    fill: '#32cd79'
+})
+
+offsetGroup.add([fakeShadow, mainRect])
+```
+
+## 锚点与原点控制
+
+- around：类似于游戏引擎中的 Anchor。它会将元素内部指定的坐标点直接对齐到全局坐标 (x, y)。在绘制中心对称图形或需要精确坐标对齐时，必须优先使用 around。
+- origin：类似于 CSS 的 transform-origin。它仅决定元素旋转、缩放、倾斜时的基准点，不会改变元素左上角对齐 (x, y) 的初始行为。
+- 坐标定义：
+  - 方位词：支持 `'top-left'`, `'top'`, `'top-right'`, `'left'`, `'center'`, `'right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'` 9 个方位关键词。
+  - 精确坐标：支持对象格式 { type: 'percent', x: 0.5, y: 0.5 } (百分比) 或 { x: 50, y: 50 } (像素值)。
+- 坐标语义改变：当元素开启 `around: 'center'` 时，其 `x` 和 `y` 属性的物理含义将突变为元素的正中心坐标，不再是默认的左上角。
+
+```javascript
+// #元素布局 [使用 around 实现中心点对齐绘制]
+// 核心：此时 (50, 50) 是矩形的中心点坐标，而不是左上角
+const centeredRect = new Rect({
+    x: 50,
+    y: 50,
+    width: 50,
+    height: 50,
+    around: 'center', // 核心：将矩形中心对齐到 x:50, y:50
+    fill: '#4DCB71',
+    rotation: 45 // 围绕中心点旋转
+})
+
+// #元素变换 [使用 origin 实现指定位置旋转]
+// 核心：此时 (25, 25) 依然是矩形的左上角坐标
+const pivotRect = new Rect({
+    x: 25,
+    y: 25,
+    width: 50,
+    height: 50,
+    origin: 'center', // 核心：左上角位置不变，但旋转中心设为中心
+    rotation: 45,
+    fill: '#4DCB71'
+})
+
+// #元素变换 [使用自定义百分比锚点]
+const customAnchorRect = new Rect({
+    x: 100,
+    y: 100,
+    width: 200,
+    height: 100,
+    fill: '#32cd79',
+    // 核心：使用对象定义内部 80% 宽度、20% 高度位置为对齐点
+    around: {
+        type: 'percent',
+        x: 0.8,
+        y: 0.2
+    }
+})
+```
+
+## 渲染边界修正
+
+- renderSpread：这是一个辅助属性，用于强制扩大元素的渲染边界数值。
+  - 应用场景：当文本或带有复杂滤镜的元素出现边缘裁剪、花屏或显示不全时，可以通过设置此属性手动扩张渲染区域。
+  - 赋值格式：number: 四周统一扩展像素，如 renderSpread: 20。Array: 分别设置 [top, right, bottom, left]，如 renderSpread: [20, 10, 20, 10]。
+
+```javascript
+// #元素布局 [使用 renderSpread 修正渲染溢出]
+const complexText = new Text({
+    x: 100,
+    y: 100,
+    text: '渲染边缘修正演示',
+    fill: '#32cd79',
+    fontSize: 40,
+    // 核心：强制向四周扩展 20 像素的渲染边界，防止文本边缘在高倍率或特殊字体下被裁切
+    renderSpread: 20 
+})
+```
+
+## 层叠顺序规范
+
+- 默认层叠：系统默认按照元素声明或放入数组的先后顺序自然覆盖，后添加的元素在最上层。
+- 强制声明层级：如果必须打破自然流顺序，请在实例化时使用 `zIndex` 属性静态声明（数值越大越靠前，默认为 0）。绝对禁止在运行时通过回调或定时器去修改 `zIndex`。
+
+```javascript
+// #元素布局 [使用 zIndex 控制层叠顺序]
+const stackGroup = new Group()
+
+const topCard = new Rect({
+    x: 50, y: 50, width: 200, height: 200, fill: '#32cd79',
+    zIndex: 10 // 核心：数值越大层级越高。即使它先被声明/添加，也会盖在后面的元素上方
+})
+
+const background = new Rect({
+    x: 0, y: 0, width: 500, height: 500, fill: '#f0f0f0',
+    zIndex: 0 // 默认底层
+})
+
+// topCard 尽管在数组前面，但因为 zIndex 高，渲染时会在最上面
+stackGroup.add([topCard, background])
+```

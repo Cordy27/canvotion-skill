@@ -1,0 +1,15 @@
+# Code Skill: Video
+
+Load this rule for the implementation guidance for video or multimedia slides.
+
+## Required patterns
+
+- Use a thumbnail `Image()` when one is available. Otherwise use a dark `Rect` as the player backdrop.
+- Simulate the player UI with a play button overlay.
+- Simulate a progress bar with a track and a foreground progress element.
+- Bundle the player pieces into one `Group` before adding it to the frame.
+
+## Layout guidance
+
+- Keep the video area dominant and close to 16:9.
+- Center the play button with explicit math or parent alignment instead of relying on implicit placement.

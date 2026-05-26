@@ -1,0 +1,37 @@
+# Workspace Publish Rule
+
+Use this rule when you intend to create, replace, or publish page code.
+
+## Command usage preference
+
+- Run project operations through high-level `canvotion ...` CLI wrappers. The CLI calls Tool API behind the scenes.
+- If local workspace files are missing or stale, run `canvotion workspace prepare --all` first.
+- For a new page or newly requested animation, prefer `canvotion page ship --stdin-file page.js`; omitting `--filename` creates a new workspace page and publishes it with `append` when supported by the current wrapper schema.
+- For a step-by-step new page flow, use `canvotion page write --stdin-file page.js`, record the returned `filename`, then verify and publish that explicit filename.
+- Write to an existing workspace page only when you intentionally target that file: `canvotion page write --filename <logical-page-filename> --stdin-file page.js`.
+- For a narrow edit to existing workspace code, prefer `canvotion page patch --filename <logical-page-filename> --stdin-json-file patch.json` with exact replacement ops instead of rewriting the whole file.
+- Verify the workspace code with `canvotion page verify --filename <logical-page-filename>` before publishing it to the database.
+- Only publish after verification succeeds.
+- When replacing the focused page and the code is straightforward, use `canvotion page ship --filename <focus_page> --mode replace_focus --stdin-file page.js`.
+- When a small exact edit is enough and the current workspace code has been prepared/read, you may use `canvotion page ship-patch --filename <logical-page-filename> --stdin-json-file patch.json` to patch, verify, and publish in one command.
+- When you need to inspect current code, debug validation errors, or preserve continuation blocks, prefer the separate `page read / page write / page verify / page publish` commands.
+- Do not use `focus_page` as an implicit filename. `page read / patch / verify / publish` require an explicit `--filename`; replacing the current page requires `--filename <focus_page> --mode replace_focus`.
+
+## Publishing behavior
+
+- When a request is about creating a new animation or adding a new page, publish a new page and let the manifest order update accordingly.
+- When a request is explicitly about replacing or editing the current focused page, publish back to that same page with explicit `--filename <focus_page> --mode replace_focus`.
+- When the current page is a `draft`, do not replace it just because it is focused; target `<focus_page>` only when the user intent is to turn that draft into the current page.
+- Every newly generated `page` should land in the database as a complete saved page, not as a markerless one-off code file.
+- For explicit `draft -> page`, archive the prompt and source sub-pages into `draft_history` only after publish succeeds.
+- External-basic does not support previous-end continuation publish. When the request is explicitly about continuing the current focused page rather than remaking it, read the current page, preserve the parts that should remain, and publish an ordinary `replace_focus` update with continuation `none`.
+- Do not pass or document the previous-end continuation value in external CLI commands. If the user needs internal continuation behavior, state that it requires a project-agent-internal capability unavailable through this skill.
+- Treat phrases like “续写当前页 / 接着上一段 / 保留原页面继续加动画 / 在现有画面后面继续” as intent to edit the current page while preserving prior content, not as permission to use an unsupported external continuation mode.
+
+## Safety requirements
+
+- If verification fails, revise the code and verify again instead of pretending publish succeeded.
+- If render, critique, or visual fix tools are not available yet, do not claim that they already ran.
+- Patch payloads must be exact and unambiguous. Each op must use `{ "op": "replace", "find": "...", "replace": "...", "expected_occurrences": 1 }`; do not use patch if the old text is uncertain or appears multiple times.
+- For current-page edits, read the current page code first with `canvotion page read --filename <focus_page>`, preserve the intended existing content, then verify and publish through the ordinary external wrapper path.
+- If you decide a request cannot be safely expressed as a focused edit, say so in plain language before switching to a full `replace_focus` remake.

@@ -1,0 +1,33 @@
+# Common Errors Rule
+
+Load this rule as the common error checklist before approving, critiquing, or refining Leafer slide code.
+
+## Historical mistakes to check
+
+- Missing initial states for delayed animations
+  - If an element should fade or scale in after a delay, the element itself must start hidden or reduced before the animation begins.
+- Typography and layout overlap
+  - Large text blocks must not overlap, clip at screen edges, or become illegible against the background.
+- Missing explicit elements from the plan
+  - Crucial planned shapes, grids, silhouettes, or hero elements cannot silently disappear from the final code.
+- Requested count mismatch for repeated elements
+  - If the prompt asks for a concrete count such as three phones, three cards, or four icons, verify that the final scene really attaches that many instances.
+  - Watch for `parent.add(a, b, c)` misuse in Leafer; prefer array form, repeated `add(...)`, or `addMany(...)` so repeated elements do not partially disappear.
+- `LeaferVoiceover.text` and `LeaferVoiceover.voice` misuse
+  - Spoken content belongs in `text`, and `voice` must use a valid voice id.
+- `LeaferVoiceover.url` / `transcript` misuse
+  - Authored slide code must not hardcode audio urls or transcript arrays on `LeaferVoiceover`; keep voiceover declarative with `text` and `voice`.
+- `LeaferThree` texture refs written onto objects
+  - `mapAssetId` and other `*AssetId` fields belong on `scene_spec.materials[]`, not on `scene_spec.objects[]`.
+- Ignoring multi-stage triggers
+  - Distinct narration beats need distinct animation objects with their own `triggerAtWord`.
+- `lineHeight` written as a plain number
+  - Plain numeric `lineHeight` collapses text in the renderer and must be replaced with Leafer percent format or removed.
+- Off-screen nodes missing `opacity: 0`
+  - Entrance nodes that begin outside the canvas must also begin hidden to avoid compositing artifacts.
+- Composite component drift
+  - If the outer frame moves as a unit but the inner content looks offset, first check whether the component was split into `componentRoot -> shell / viewport / contentGroup`.
+  - Then check whether child layers relied on `around: 'center'` without explicit shared `x / y`.
+  - Then check whether child layers received compensating `x / y / rotation / scale` motion even though the parent already owns the main movement.
+- `shadow` combined with transform animation
+  - Actively rotating or scaling nodes must not use `shadow`.

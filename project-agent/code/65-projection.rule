@@ -1,0 +1,96 @@
+# LeaferProjection 映射动画规则
+
+当页面需要卡片翻转、PPT 页面倾斜、立方体面板、简单相机推进等“原生 Leafer 元素的轻量 3D 映射”时，加载这条规则。
+
+## 适用范围
+
+- 使用 `LeaferProjection` 包住一个或多个 `LeaferProjectionFace`。
+- 每个 `LeaferProjectionFace` 内优先放原生 2D Leafer 节点：`Group`、`Box`、`Rect`、`Text`、`Line`、`Ellipse`、`Polygon`、`Image`、`Path`；当前唯一允许的媒体例外是 `LeaferVideo`。
+- 适合做平面内容的透视映射，不用于真实 3D 场景、光照、模型、shader、相机轨道或交互控制。需要这些能力时改用 `LeaferThree`。
+
+## 结构合同
+
+- `LeaferProjection` 的直接子节点必须全部是 `LeaferProjectionFace`。
+- `LeaferProjectionFace` 不能离开 `LeaferProjection` 单独使用。
+- `LeaferProjectionFace` 内允许放 `LeaferVideo`，但仍禁止放 `LeaferAudio`、`LeaferVoiceover`、`LeaferThree`、`LeaferProjection`、`LeaferProjectionFace`。
+- 不要写 `matrix3d`、`projectionMatrix`、`renderer`、`texture`、`canvas`、`context`、shader 字段、回调函数、`projection_timeline`、`three_timeline` 或 `scene_spec`。
+
+## 字段合同
+
+- `LeaferProjection` 必须显式设置 `width` 和 `height`，并把子元素放在面内的局部坐标里。
+- 可用父级字段：`projectionPerspective`、`projectionCameraZ`、`projectionDepth`、`projectionNear`、`projectionOriginX`、`projectionOriginY`、`projectionRotateX`、`projectionRotateY`、`projectionRotateZ`、`projectionTranslateX`、`projectionTranslateY`、`projectionTranslateZ`、`projectionBackface`、`projectionQuality`。
+- `projectionBackface` 只能是 `"hidden"` 或 `"visible"`。
+- `projectionQuality` 只能是 `"auto"`、`"low"`、`"medium"` 或 `"high"`。
+- `LeaferProjectionFace.projectionFace` 只能是 `"front"`、`"back"`、`"left"`、`"right"`、`"top"`、`"bottom"`。
+- `LeaferProjectionFace.projectionShadowOpacity` 只能是 `0` 到 `1` 之间的有限数值；它表示当前 face 的表面压暗层，不是跨面或落地的真实阴影。
+- 面尺寸与偏移字段只用于静态几何：`projectionFaceWidth`、`projectionFaceHeight`、`projectionOffsetX`、`projectionOffsetY`、`projectionOffsetZ`、`projectionFaceRotateX`、`projectionFaceRotateY`、`projectionFaceRotateZ`。
+
+## 动画合同
+
+- 只使用普通 Leafer `animation`，并遵守 `project-agent/code/animation-and-motion` 的生命周期 keyframes 合同；不要用 `animationOut` 单独写出场。
+- 可以动画化父级字段：`projectionPerspective`、`projectionCameraZ`、`projectionDepth`、`projectionOriginX`、`projectionOriginY`、`projectionRotateX`、`projectionRotateY`、`projectionRotateZ`、`projectionTranslateX`、`projectionTranslateY`、`projectionTranslateZ`。
+- 不要动画化 `projectionNear`、`projectionBackface`、`projectionQuality`、`projectionShadowOpacity` 或任何 `LeaferProjectionFace` 几何字段。
+- 翻卡片优先动画 `projectionRotateY`；PPT 页面倾斜优先动画 `projectionRotateX/Y`；简单相机推进优先动画 `projectionCameraZ` 或 `projectionTranslateZ`。
+
+## 最小示例
+
+```js
+const card = new LeaferProjection({
+  x: 560,
+  y: 240,
+  width: 800,
+  height: 520,
+  projectionPerspective: 1000,
+  projectionCameraZ: 1000,
+  projectionBackface: 'hidden',
+  animation: {
+    duration: 1.2,
+    easing: 'ease-in-out',
+    style: { projectionRotateY: 180 }
+  }
+});
+
+const front = new LeaferProjectionFace({ projectionFace: 'front' });
+front.add(new Rect({ x: 0, y: 0, width: 800, height: 520, fill: '#ffffff' }));
+front.add(new Text({ x: 60, y: 72, text: 'Front', fontSize: 80, fill: '#111827' }));
+
+const back = new LeaferProjectionFace({ projectionFace: 'back' });
+back.add(new Rect({ x: 0, y: 0, width: 800, height: 520, fill: '#111827' }));
+back.add(new Text({ x: 60, y: 72, text: 'Back', fontSize: 80, fill: '#ffffff' }));
+
+card.add([front, back]);
+frame.add(card);
+```
+
+## 视频面压暗示例
+
+```js
+const projection = new LeaferProjection({
+  x: 320,
+  y: 180,
+  width: 960,
+  height: 540,
+  projectionPerspective: 960,
+  projectionCameraZ: 1100,
+  projectionRotateX: -10,
+  projectionRotateY: 18
+});
+
+const face = new LeaferProjectionFace({
+  projectionFace: 'front',
+  projectionShadowOpacity: 0.38
+});
+
+face.add(new LeaferVideo({
+  x: 0,
+  y: 0,
+  width: 960,
+  height: 540,
+  url: videoUrl,
+  autoplay: true,
+  loop: true
+}));
+
+projection.add(face);
+frame.add(projection);
+```
