@@ -16,7 +16,7 @@
 
 ## 🎞️ 效果展示
 
-> 💡 **Tip:** 以下动画由 AI Agent 根据本项目的 Rule 规则，输出纯 JavaScript 代码并在无头浏览器中渲染生成。
+> 💡 **Tip:** 以下动画由 AI Agent 根据本项目的 Rule 规则，输出纯 JavaScript 代码并在浏览器中渲染生成。
 
 <table align="center" style="border: none;">
   <tr>
