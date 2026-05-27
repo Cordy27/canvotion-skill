@@ -2,9 +2,9 @@
   "skill_version": "2026.05.22",
   "compatible_command_schema_version": "2026-05-06",
   "schema_kind": "external_cli_wrapper",
-  "project_agent_source_review": {
+  "authoring_reference_source_review": {
     "source": "cloudrun/project-agent/skills/project-agent",
-    "external_tree": "skills/canvotion/project-agent",
+    "external_tree": "skills/canvotion/references/authoring",
     "reviewed_at": "2026-05-22",
     "mode": "manual-mirror-with-external-boundary-edits",
     "allowed_boundary_edits": [
@@ -30,7 +30,7 @@
       "threejs/80-loaders.rule"
     ]
   },
-  "mirrored_project_agent_paths": [
+  "mirrored_authoring_reference_paths": [
     "skill.md",
     "plan/skill.md",
     "plan/10-outline.rule",

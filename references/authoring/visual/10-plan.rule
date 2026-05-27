@@ -31,5 +31,5 @@ Load this rule when you need the visual planning structure for one page or scene
 - Use the previous page visual plan only to keep continuity, not to duplicate the prior composition.
 - Keep the plan detailed enough that page code can be produced without inventing the scene from scratch.
 - This rule describes one page or scene. It does not store the project outline and must not be used to fill the outline overview table.
-- If the task is a project outline, storyboard, numbered scene list, or user-supplied outline, switch to `project-agent/plan/outline` and use `canvotion plan write --stdin-json-file <plan.json>` plus `canvotion plan publish` instead of returning chat markdown or fenced JSON.
+- If the task is a project outline, storyboard, numbered scene list, or user-supplied outline, switch to `references/authoring/plan/outline` and use `canvotion plan write --stdin-json-file <plan.json>` plus `canvotion plan publish` instead of returning chat markdown or fenced JSON.
 - For one-page visual planning, return concise structured guidance only when the user is asking for discussion or critique; when implementing, proceed to the relevant code commands.

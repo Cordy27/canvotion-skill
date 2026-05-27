@@ -66,11 +66,12 @@ Canvotion-Skill 将大模型的认知过程拆解为 4 个层级的 `Rules`：
 canvotion-skill/
 ├── manifest.json              # ⚙️ 技能元数据与 Schema 版本配置
 ├── SKILL.md                   # 🔌 Canvotion CLI 核心交互约定与系统边界
-└── project-agent/             # 🧠 喂给 LLM 的知识图谱核心
-    ├── plan/                  # 📝 视频结构大纲与脚本规划
-    ├── visual/                # 👁️ 视觉排版、自我审查与美学纠错
-    ├── code/                  # 💻 2D 图元、样式、动画、媒体、旁白与资源管理
-    └── threejs/               # 🧊 3D 场景、材质、光照、着色器与后期处理
+└── references/
+    └── authoring/             # 🧠 喂给 LLM 的 authoring reference tree
+        ├── plan/              # 📝 视频结构大纲与脚本规划
+        ├── visual/            # 👁️ 视觉排版、自我审查与美学纠错
+        ├── code/              # 💻 2D 图元、样式、动画、媒体、旁白与资源管理
+        └── threejs/           # 🧊 3D 场景、材质、光照、着色器与后期处理
 ```
 
 ## 🚀 快速开始
@@ -90,7 +91,7 @@ canvotion projects create --title "My First AI Video" --template blank --start-s
 canvotion session start --project-id <your_project_id>
 ```
 ### 3. Agent 驱动流
-将本仓库 SKILL.md 及 project-agent/ 下相关的 .rule 注入给你的 AI Agent 系统提示词中，Agent 即可学会如何使用 CLI 读写代码并发布：
+将本仓库 SKILL.md 及 references/authoring/ 下相关的 .rule 注入给你的 AI Agent 系统提示词中，Agent 即可学会如何使用 CLI 读写代码并发布：
 
 ```Bash
 # Agent 生成并覆盖写入画布代码

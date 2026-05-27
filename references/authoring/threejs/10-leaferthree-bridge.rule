@@ -59,10 +59,10 @@ Load this rule before using the upstream Three.js topic modules for repository p
 
 - For page generation and focused edits, continue to follow the repository `Frame` contract. External-basic does not expose previous-end continuation publish.
 - For repository page tasks, pair this rule with the relevant topic modules, for example:
-  - `project-agent/threejs/fundamentals` for camera and scene structure
-  - `project-agent/threejs/lighting` for lighting rigs
-  - `project-agent/threejs/animation` for `three_timeline`
-  - `project-agent/threejs/loaders` for model or texture ingestion strategy
+  - `references/authoring/threejs/fundamentals` for camera and scene structure
+  - `references/authoring/threejs/lighting` for lighting rigs
+  - `references/authoring/threejs/animation` for `three_timeline`
+  - `references/authoring/threejs/loaders` for model or texture ingestion strategy
 
 ## Explicit guardrails
 

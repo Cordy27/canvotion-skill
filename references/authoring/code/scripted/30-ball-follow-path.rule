@@ -11,9 +11,9 @@
 
 ## 必要加载顺序
 
-- 先加载 `project-agent/code/canvas-and-elements` 和 `project-agent/code/layout-and-transform`。
-- 如果要让小球沿路径运动，再加载 `project-agent/code/animation-and-motion`。
-- 在做发布决定前，加载 `project-agent/code/workspace-publish`。
+- 先加载 `references/authoring/code/canvas-and-elements` 和 `references/authoring/code/layout-and-transform`。
+- 如果要让小球沿路径运动，再加载 `references/authoring/code/animation-and-motion`。
+- 在做发布决定前，加载 `references/authoring/code/workspace-publish`。
 
 ## 执行逻辑
 

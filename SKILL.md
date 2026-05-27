@@ -10,7 +10,7 @@ description: "Generate editable video projects and render them using code via th
 - Use the Canvotion CLI to interact with Canvotion services.
 - Execute only standard high-level CLI commands (e.g., `canvotion ...`).
 - Do not attempt to call underlying API endpoints or internal system commands directly.
-- For authoring guidelines, refer to the rule files under the `[project-agent](./project-agent)` directory (which contains guidelines for planning, visuals, coding, and 3D scenes).
+- For authoring guidelines, refer to the rule files under the `[references/authoring](./references/authoring)` directory (which contains guidelines for planning, visuals, coding, and 3D scenes).
 
 ## Setup
 
@@ -49,7 +49,13 @@ description: "Generate editable video projects and render them using code via th
    - `canvotion page verify --filename page-001.json`
    - `canvotion page publish --filename page-001.json --mode replace_focus`
    - `canvotion page ship --filename page-001.json --mode replace_focus --stdin-file page.js`
-6. Export saved renders:
+6. Share the editor preview and wait for user approval:
+   - After the final `page publish` or `page ship`, construct the editor URL as `https://canvotion.com/editor.html?project_id=<project_id>&file=<target_filename>`.
+   - Get `<project_id>` from the active selected project or session context, such as `projects create`, `projects use`, `projects current`, or `session status`. Do not assume `publish_result` contains a project id.
+   - Use the returned `publish_result.target_filename` as `<target_filename>`. If it is absent, fall back only to the explicit `--filename` used in the publish command; otherwise stop and ask for the target file instead of guessing.
+   - Tell the user the editor URL and ask them to preview the addressed page before video export. For project-scope video, ask them to check project order and all pages in the editor.
+   - Do not run `canvotion render video` until the user approves the preview, unless the user explicitly asked in the current request to export directly or skip preview.
+7. Export saved renders:
    - `canvotion render image --filename page-001.json [--time-seconds <seconds>] --output page-001.png`
    - `canvotion render video --scope slide --filename page-001.json`
    - `canvotion render video --scope slide --filename page-001.json --wait --timeout-seconds 120 --output page-001.mp4`
@@ -60,7 +66,7 @@ description: "Generate editable video projects and render them using code via th
    - `canvotion render download --task-id <task_id> --output project.mp4 [--resume] [--retries <n>]`
    - `canvotion render image` defaults to exporting the first frame; specify `--time-seconds <seconds>` to capture other timestamps.
    - `canvotion render download` keeps the `.part` file upon failure; use `--resume` to continue and `--retries` to specify retry attempts.
-7. Diagnose:
+8. Diagnose:
    - `canvotion doctor`
    - `canvotion version`
 
@@ -76,10 +82,10 @@ description: "Generate editable video projects and render them using code via th
 
 ## Authoring Rule Tree
 
-- Use `[project-agent/plan/10-outline.rule](./project-agent/plan/10-outline.rule)` for project outlines.
-- Use `[project-agent/visual/](./project-agent/visual/)` rules for visual planning and refinement.
-- Use `[project-agent/code/](./project-agent/code/)` rules for Frame/Leafer authoring, styles, animations, voiceovers, and asset references.
-- Use `[project-agent/threejs/](./project-agent/threejs/)` rules when the canvas requires 3D scene configuration.
+- Use `[references/authoring/plan/10-outline.rule](./references/authoring/plan/10-outline.rule)` for project outlines.
+- Use `[references/authoring/visual/](./references/authoring/visual/)` rules for visual planning and refinement.
+- Use `[references/authoring/code/](./references/authoring/code/)` rules for Frame/Leafer authoring, styles, animations, voiceovers, and asset references.
+- Use `[references/authoring/threejs/](./references/authoring/threejs/)` rules when the canvas requires 3D scene configuration.
 
 ## Boundaries
 
@@ -89,5 +95,6 @@ description: "Generate editable video projects and render them using code via th
 - For transparent overlay video intended for Premiere Pro, Jianying, or After Effects, author subject-only alpha-safe scenes with no full-canvas background fills, opaque backdrops, or solid Frame fill, then request export with exactly `--format mov-alpha`.
 - Image uploading supports standard file paths via `canvotion image upload --file`.
 - For canvas publishing, only use continuation `none`.
+- Before video export, show the user the editor preview URL and wait for approval. The preview URL format is `https://canvotion.com/editor.html?project_id=<project_id>&file=<target_filename>`.
 - Do not attempt to use any private backend routes or internal system commands.
 - Prefer `page ship` for a single operation; use `write -> verify -> publish` when iterative correction is needed.

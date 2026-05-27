@@ -27,7 +27,7 @@
 
 ## 动画合同
 
-- 只使用普通 Leafer `animation`，并遵守 `project-agent/code/animation-and-motion` 的生命周期 keyframes 合同；不要用 `animationOut` 单独写出场。
+- 只使用普通 Leafer `animation`，并遵守 `references/authoring/code/animation-and-motion` 的生命周期 keyframes 合同；不要用 `animationOut` 单独写出场。
 - 可以动画化父级字段：`projectionPerspective`、`projectionCameraZ`、`projectionDepth`、`projectionOriginX`、`projectionOriginY`、`projectionRotateX`、`projectionRotateY`、`projectionRotateZ`、`projectionTranslateX`、`projectionTranslateY`、`projectionTranslateZ`。
 - 不要动画化 `projectionNear`、`projectionBackface`、`projectionQuality`、`projectionShadowOpacity` 或任何 `LeaferProjectionFace` 几何字段。
 - 翻卡片优先动画 `projectionRotateY`；PPT 页面倾斜优先动画 `projectionRotateX/Y`；简单相机推进优先动画 `projectionCameraZ` 或 `projectionTranslateZ`。

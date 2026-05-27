@@ -117,7 +117,7 @@ const titleText = new Text({
 - 多子节点挂载：当父节点需要挂载多个同级子节点时，使用 `parent.add([childA, childB])`、多次 `parent.add(child)`，或 `parent.addMany(childA, childB)`；不要写 `parent.add(childA, childB, childC)`。
 - 数量自检：当 prompt 明确给出数量时，代码里必须保留同样数量的真实实例，并在挂载完成后自检这些实例都已进入场景。
 - 视频/媒体占位：需要播放器式表达时，把缩略图 `Image` 或深色 `Rect` 背板、播放按钮和进度条组织进同一个 `Group`；视频区域应接近 16:9，播放按钮用显式坐标或父级对齐居中。
-- 专题组件入口：使用 `ManimAnimation` 前加载 `project-agent/code/manim`；使用 `LeaferVoiceover` 前加载 `project-agent/code/voiceover`；使用 `LeaferProjection` 前加载 `project-agent/code/projection`；准备保存、验证或发布 page code 前加载 `project-agent/code/workspace-publish`。
+- 专题组件入口：使用 `ManimAnimation` 前加载 `references/authoring/code/manim`；使用 `LeaferVoiceover` 前加载 `references/authoring/code/voiceover`；使用 `LeaferProjection` 前加载 `references/authoring/code/projection`；准备保存、验证或发布 page code 前加载 `references/authoring/code/workspace-publish`。
 
 ## 项目级输出补充
 

@@ -13,8 +13,8 @@ Load this rule when you need the repair contract for regenerating an existing sl
 
 - Fix the current slide based on the feedback instead of inventing a new concept.
 - Preserve the intended narrative unless the feedback proves the original structure is unusable.
-- Reapply the Leafer Javascript construction contracts from `project-agent/code/canvas-and-elements`, `project-agent/code/layout-and-transform`, and `project-agent/code/visual-style`; also load `project-agent/code/animation-and-motion` when the repaired slide contains motion.
-- Load `project-agent/visual/common-errors` before finalizing the repaired result.
+- Reapply the Leafer Javascript construction contracts from `references/authoring/code/canvas-and-elements`, `references/authoring/code/layout-and-transform`, and `references/authoring/code/visual-style`; also load `references/authoring/code/animation-and-motion` when the repaired slide contains motion.
+- Load `references/authoring/visual/common-errors` before finalizing the repaired result.
 
 ## Output contract
 
