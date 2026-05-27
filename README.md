@@ -66,8 +66,8 @@ canvotion-skill/
 ├── manifest.json              # ⚙️ 技能元数据与 Schema 版本配置
 ├── SKILL.md                   # 🔌 Canvotion CLI 核心交互约定与系统边界
 └── project-agent/             # 🧠 喂给 LLM 的知识图谱核心
-    ├── plan/                  # 📝 视频结构大纲与脚本规划 (Outline)
-    ├── visual/                # 👁️ 视觉排版、自我审查与美学纠错 (Critique & Refinement)
+    ├── plan/                  # 📝 视频结构大纲与脚本规划
+    ├── visual/                # 👁️ 视觉排版、自我审查与美学纠错
     ├── code/                  # 💻 2D 图元、样式、动画、媒体、旁白与资源管理
     └── threejs/               # 🧊 3D 场景、材质、光照、着色器与后期处理
 ```
