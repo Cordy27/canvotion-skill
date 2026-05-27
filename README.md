@@ -9,7 +9,8 @@
 
 <br>
 
-**Canvotion-Skill** 是一个专为 AI Agent 打造的高级视觉与视频工程指令库。  
+**Canvotion-Skill** 是一个专为 AI Agent 打造的高级视觉与视频工程指令库。
+
 通过结合 **Canvotion CLI** 与经过调优的 System Rules，它能赋予大语言模型制作图形与动画的能力。只需输入自然语言，即可在 Web 环境中自动编写、验证并渲染出商业发布会级别的 2D 动态影像 (LeaferJS) 与 3D 交互场景 (Three.js)。
 
 ---
@@ -107,7 +108,7 @@ canvotion render video --scope slide --filename page-001.json --format mov-alpha
 ```
 
 
-## 🤝 参与贡献 
+## 🤝 参与贡献
 我们欢迎任何形式的贡献！
 如果你发现了会导致渲染报错的幻觉代码，请在 Issues 中提交。
 如果你调试出了更惊艳的 2D/3D 视觉配方（如：高级 Shader、水波纹模拟、拟真设备框），欢迎将它们整理为新的 .rule 或 scripted 模板提交 PR。
