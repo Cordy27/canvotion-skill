@@ -112,7 +112,7 @@ canvotion render video --scope slide --filename page-001.json --format mov-alpha
 ## 🤝 参与贡献
 我们欢迎任何形式的贡献！
 如果你发现了会导致渲染报错的幻觉代码，请在 Issues 中提交。
-如果你调试出了更惊艳的 2D/3D 视觉配方（如：高级 Shader、水波纹模拟、拟真设备框），欢迎将它们整理为新的 .rule 或 scripted 模板提交 PR。
+如果你调试出了更惊艳的 2D/3D 视觉配方，或者开发了具有广泛应用场景的模板，请在 Issues 中提出。
 
 ## 📜 许可证
 本项目基于 MIT License 开源。
